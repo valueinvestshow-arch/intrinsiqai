@@ -1,0 +1,7 @@
+# Generated data builds (rebuild with tools/fetch_all.py, fetch_prices.py, fetch_fx.py)
+pub/
+pub2/
+pub3/
+pub4/
+pubL/
+__pycache__/

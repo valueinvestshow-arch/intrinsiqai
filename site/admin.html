@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>IntrinsiQAI Waitlist Admin</title>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+:root {
+  --bg: #F4F6FA; --surface: #FFFFFF; --sunken: #EBEEF4; --ink: #0D1424; --muted: #5A6579; --line: #DADFE8;
+  --accent: #2347E8; --accent2: #0EA5C0; --accent-ink: #FFFFFF; --bad: #C93C3C;
+  --f-display: "Geologica", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Geologica", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #080D16; --surface: #101827; --sunken: #0C1320; --ink: #E8ECF4; --muted: #93A0B7; --line: #222E42; --accent: #7790FF; --accent2: #3FD6EA; --accent-ink: #080D16; --bad: #EF7171; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding: 32px max(16px, env(safe-area-inset-right, 0px)) 64px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 20px; }
+h1 { font-family: var(--f-display); font-size: 30px; margin: 0; letter-spacing: -0.02em; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); flex: 1 1 260px; }
+input { font: 15px var(--f-mono); padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; }
+button { font: 600 14px var(--f-body); padding: 12px 16px; border-radius: 10px; border: 0; cursor: pointer; background: var(--accent); color: var(--accent-ink); }
+button.ghost { background: var(--sunken); color: var(--ink); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stat span { display: block; font-size: 12px; color: var(--muted); }
+.stat b { font-family: var(--f-mono); font-size: 32px; font-weight: 500; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) { .stats, .two { grid-template-columns: 1fr; } }
+h2 { font-size: 15px; margin: 0 0 10px; }
+.bar { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 8px; align-items: center; font-size: 13.5px; margin-bottom: 8px; }
+.bar i { display: block; height: 6px; border-radius: 9px; background: linear-gradient(90deg, var(--accent), var(--accent2)); margin-top: 4px; }
+.bar b { font-family: var(--f-mono); font-weight: 500; text-align: right; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 520px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+.msg { font-size: 13.5px; color: var(--muted); }
+.msg.err { color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Waitlist admin</h1>
+  <div class="card">
+    <form class="row" id="login">
+      <label for="token">Admin token<input id="token" type="password" autocomplete="current-password" placeholder="Paste your ADMIN_TOKEN"></label>
+      <button type="submit">Load waitlist</button>
+      <button type="button" class="ghost" id="csv" disabled>Download CSV</button>
+    </form>
+    <p class="msg" id="msg" role="status">Your token is the ADMIN_TOKEN secret you set in Cloudflare. It stays in this browser tab only.</p>
+  </div>
+  <div id="out" hidden>
+    <div class="stats">
+      <div class="card stat"><span>Total sign-ups</span><b id="s-total">0</b></div>
+      <div class="card stat"><span>Last 7 days</span><b id="s-week">0</b></div>
+      <div class="card stat"><span>Today (UTC)</span><b id="s-today">0</b></div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <div class="card"><h2>How they value stocks today</h2><div id="methods"></div></div>
+      <div class="card"><h2>Which form they used</h2><div id="sources"></div></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>Latest 25</h2>
+      <div class="tbl"><table><thead><tr><th>Email</th><th>Values stocks with</th><th>Signed up (UTC)</th></tr></thead><tbody id="latest"></tbody></table></div>
+    </div>
+  </div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+let token = "";
+try { token = sessionStorage.getItem("iq_admin") || ""; } catch {}
+if (token) { $("token").value = token; load(); }
+
+$("login").addEventListener("submit", (e) => { e.preventDefault(); token = $("token").value.trim(); try { sessionStorage.setItem("iq_admin", token); } catch {} load(); });
+
+function bars(el, rows) {
+  el.replaceChildren();
+  const max = Math.max(1, ...rows.map((r) => r.n));
+  rows.forEach((r) => {
+    const d = document.createElement("div"); d.className = "bar";
+    const left = document.createElement("div"); left.textContent = r.label;
+    const i = document.createElement("i"); i.style.width = (r.n / max) * 100 + "%"; left.append(i);
+    const b = document.createElement("b"); b.textContent = r.n;
+    d.append(left, b); el.append(d);
+  });
+  if (!rows.length) el.textContent = "No sign-ups yet.";
+}
+
+async function load() {
+  const msg = $("msg"); msg.className = "msg"; msg.textContent = "Loading…";
+  try {
+    const r = await fetch("/api/export?format=json", { headers: { Authorization: "Bearer " + token } });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "Request failed");
+    $("s-total").textContent = d.total; $("s-week").textContent = d.last7days; $("s-today").textContent = d.today;
+    bars($("methods"), d.methods); bars($("sources"), d.sources);
+    const tb = $("latest"); tb.replaceChildren();
+    d.latest.forEach((row) => {
+      const tr = document.createElement("tr");
+      [row.email, row.current_method || "—", row.created_at.replace("T", " ").slice(0, 16)].forEach((v) => { const td = document.createElement("td"); td.textContent = v; tr.append(td); });
+      tb.append(tr);
+    });
+    $("out").hidden = false; $("csv").disabled = false;
+    msg.textContent = "Loaded " + new Date().toLocaleTimeString() + ".";
+  } catch (err) {
+    $("out").hidden = true; $("csv").disabled = true;
+    msg.className = "msg err"; msg.textContent = err.message === "Wrong admin token" ? "That token didn't match. Check the ADMIN_TOKEN secret in Cloudflare." : "Couldn't load the waitlist. " + err.message;
+  }
+}
+
+$("csv").addEventListener("click", async () => {
+  const r = await fetch("/api/export?format=csv", { headers: { Authorization: "Bearer " + token } });
+  if (!r.ok) { $("msg").className = "msg err"; $("msg").textContent = "Download failed."; return; }
+  const url = URL.createObjectURL(await r.blob());
+  const a = document.createElement("a"); a.href = url; a.download = "intrinsiqai-waitlist.csv"; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+});
+</script>
+</body>
+</html>

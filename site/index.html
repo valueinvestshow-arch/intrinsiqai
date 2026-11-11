@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>IntrinsiQAI</title>
+<meta name="description" content="Value a stock under bear, base and bull cases, keep every valuation next to the live price, and get an email when the price reaches the number you set.">
+<link rel="preload" href="/fonts/geologica-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+[hidden] { display: none !important; }
+/* One dark look, by choice. Layout: the pitch on the left, a working valuation card on the right you can drag; then the problem in the founder's words, the three things the product does shown with real figures, and one more sign-up. Tokens match the product. */
+:root {
+  --bg: #070B14; --surface: #0E1626; --sunken: #0A111D; --ink: #E8ECF4; --muted: #93A0B7; --line: #1E2A3F;
+  --accent: #7790FF; --accent2: #3FD6EA; --accent-ink: #070B14; --accent-soft: rgba(119, 144, 255, 0.14); --glow: rgba(119, 144, 255, 0.28);
+  --bear: #EF7171; --base: #D9A441; --bull: #4CC08A;
+  --bear-soft: rgba(239, 113, 113, 0.13); --base-soft: rgba(227, 174, 71, 0.13); --bull-soft: rgba(76, 192, 138, 0.13);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 22px 50px -20px rgba(0, 0, 0, 0.7);
+  --f-display: "Geologica", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Geologica", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 300 17px/1.55 var(--f-body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); letter-spacing: -0.03em; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--accent); }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font: 500 12px var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+button, input, select { font: inherit; color: inherit; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+
+/* Nav */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; }
+.logo { font-family: var(--f-display); font-weight: 800; font-size: 21px; letter-spacing: -0.03em; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; }
+.logo { font-weight: 700; }
+.logo .ai { font-weight: 300; color: var(--accent); }
+.nav-links { display: flex; gap: 22px; align-items: center; }
+.nav-links a { color: var(--muted); text-decoration: none; font-size: 14.5px; font-weight: 400; }
+.nav-links a:hover { color: var(--ink); }
+@media (max-width: 720px) { .nav-links a:not(.btn) { display: none; } }
+.btn { display: inline-flex; align-items: center; justify-content: center; font: 600 15px/1 var(--f-body); padding: 14px 20px; border-radius: 12px; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap; background: var(--accent); color: var(--accent-ink); }
+.nav-links a.btn { color: var(--accent-ink); padding: 10px 14px; font-size: 14px; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+
+/* Pointer spotlight on cards, and a soft reveal for sections below the fold */
+.card { position: relative; }
+.card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.25s; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(119, 144, 255, 0.13), transparent 60%); }
+.card:hover::after { opacity: 1; }
+.reveal.pre { opacity: 0.001; transform: translateY(18px); }
+.reveal { transition: opacity 0.6s ease, transform 0.6s ease; }
+.grad { background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: flow 6s linear infinite; }
+@keyframes flow { to { background-position: -200% 0; } }
+.spark { color: var(--accent2); }
+.caret { display: inline-block; width: 7px; height: 1em; background: var(--accent2); vertical-align: -2px; margin-left: 2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.spin { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--accent-soft); border-top-color: var(--accent); animation: rot 0.8s linear infinite; flex: none; }
+@keyframes rot { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .grad, .caret, .spin, .badge i { animation: none !important; } .reveal { transition: none; } .demo { transform: none !important; } }
+
+/* Hero */
+.hero { border-bottom: 1px solid var(--line); position: relative; overflow: hidden; isolation: isolate; }
+#field { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.hero::after { content: ""; position: absolute; z-index: -1; width: 720px; height: 720px; right: -180px; top: -260px; border-radius: 50%; background: radial-gradient(closest-side, var(--glow), transparent); pointer-events: none; }
+.demo { transition: transform 0.2s ease-out; will-change: transform; }
+.ai-log { font: 12.5px var(--f-mono); background: var(--sunken); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; min-height: 100px; align-content: start; }
+.ai-log .ln { display: flex; gap: 8px; align-items: center; color: var(--muted); }
+.ai-log .ln b { font-weight: 500; color: var(--ink); margin-left: auto; }
+.ai-log .ok { color: var(--bull); }
+.badge i { animation: ping 2s ease-out infinite; }
+@keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(76, 192, 138, 0.6); } 100% { box-shadow: 0 0 0 10px transparent; } }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 52px; align-items: center; padding-block: 64px 72px; }
+@media (max-width: 920px) { .hero .wrap { grid-template-columns: 1fr; gap: 36px; padding-block: 40px 48px; } }
+.badge { display: inline-flex; align-items: center; gap: 8px; font: 12px var(--f-mono); padding: 6px 12px 6px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.badge i { width: 8px; height: 8px; border-radius: 50%; background: var(--bull); }
+.hero h1 { font-size: clamp(40px, 5.6vw, 68px); line-height: 1; font-weight: 800; margin-top: 18px; }
+
+.lede { margin-top: 18px; font-size: 19px; color: var(--muted); max-width: 30em; }
+
+/* Sign-up form */
+.signup { margin-top: 26px; display: grid; gap: 10px; max-width: 520px; }
+.signup .row { display: flex; gap: 10px; flex-wrap: wrap; }
+.field { flex: 1 1 210px; min-width: 0; display: grid; gap: 4px; }
+.field label { font-size: 12.5px; color: var(--muted); font-weight: 400; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.field input, .field select { width: 100%; font-size: 15.5px; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.signup .btn { align-self: end; }
+.consent { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 13px; color: var(--muted); cursor: pointer; }
+.consent input { width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--accent); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.form-note { font-size: 13.5px; color: var(--muted); min-height: 1.4em; }
+.form-note.ok { color: var(--bull); font-weight: 500; }
+.form-note.err { color: var(--bear); font-weight: 500; }
+
+/* Demo card */
+.demo { padding: 20px; display: grid; gap: 16px; box-shadow: var(--shadow); min-width: 0; }
+.demo-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.tk { display: flex; align-items: center; gap: 10px; }
+.tk .sq { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--sunken); font: 12px var(--f-mono); color: var(--muted); }
+.tk b { font: 700 18px var(--f-display); display: block; line-height: 1.1; }
+.tk small, .px small { font-size: 12px; color: var(--muted); display: block; }
+.px { text-align: right; }
+.px b { font: 500 22px var(--f-mono); }
+.cases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.case { border-radius: 11px; padding: 10px 12px; min-width: 0; }
+.case span { display: block; font-size: 12.5px; font-weight: 600; }
+.case b { font: 500 clamp(17px, 2.3vw, 22px) var(--f-mono); }
+.case.bear { background: var(--bear-soft); } .case.bear span { color: var(--bear); }
+.case.base { background: var(--base-soft); } .case.base span { color: var(--base); }
+.case.bull { background: var(--bull-soft); } .case.bull span { color: var(--bull); }
+.demo svg { display: block; width: 100%; }
+.demo svg text, .viz svg text { font-family: var(--f-mono); font-size: 11px; }
+.slide label { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.slide input { width: 100%; accent-color: var(--accent); margin: 6px 0 0; }
+.alert-row { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; border: 1px dashed var(--line); font-size: 14px; }
+.pill { font: 500 12px var(--f-mono); padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.wait { background: var(--sunken); color: var(--muted); } .pill.near { background: var(--base-soft); color: var(--base); } .pill.go { background: var(--bull-soft); color: var(--bull); }
+.fine { font-size: 12px; color: var(--muted); }
+
+/* Bands */
+section.band { padding-block: 84px; border-bottom: 1px solid var(--line); }
+@media (max-width: 700px) { section.band { padding-block: 56px; } }
+.band-head { display: grid; gap: 12px; max-width: 700px; margin-bottom: 40px; }
+.band-head h2 { font-size: clamp(30px, 4vw, 46px); line-height: 1.05; font-weight: 800; }
+.band-head p { color: var(--muted); }
+
+/* Problem */
+.problem { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 860px) { .problem { grid-template-columns: 1fr; } }
+.quote { font: 400 clamp(21px, 2.6vw, 28px)/1.3 var(--f-display); letter-spacing: -0.02em; border-left: 3px solid var(--accent); padding-left: 20px; }
+.quote small { display: block; margin-top: 14px; font: 300 14px var(--f-body); color: var(--muted); letter-spacing: 0; }
+.pains { display: grid; gap: 18px; }
+.pain h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.pain p { color: var(--muted); font-size: 16px; margin-top: 3px; }
+
+/* What it does */
+.does { display: grid; gap: 20px; }
+.feature { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 32px; align-items: center; padding: 28px; }
+.feature:nth-child(even) .copy { order: 2; }
+@media (max-width: 860px) { .feature { grid-template-columns: 1fr; padding: 20px; } .feature:nth-child(even) .copy { order: 0; } }
+.copy { display: grid; gap: 10px; }
+.copy h3 { font-size: 26px; font-weight: 700; }
+.copy p { color: var(--muted); }
+.copy ul { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: 15.5px; }
+.copy li { padding-left: 22px; position: relative; }
+.copy li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 9px; height: 5px; border-left: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg); }
+.viz { background: var(--sunken); border-radius: 14px; padding: 16px; min-width: 0; display: grid; gap: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; padding: 7px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-weight: 400; cursor: pointer; transition: background 0.2s, color 0.2s, transform 0.15s; }
+.chip:hover { color: var(--ink); transform: translateY(-1px); }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; color: var(--accent); font-weight: 600; }
+#v-rev rect.bar { cursor: pointer; transition: opacity 0.15s; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: right; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font: 500 11px var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+td.num { font-family: var(--f-mono); }
+td small { display: block; color: var(--muted); font-size: 11.5px; }
+th.bear { color: var(--bear); } th.base { color: var(--base); } th.bull { color: var(--bull); }
+.mail { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14px; }
+.mail-h { background: var(--bg); padding: 9px 13px; font-size: 12px; color: var(--muted); display: grid; gap: 1px; }
+.mail-h b { color: var(--ink); font-size: 14px; font-weight: 600; }
+.mail-b { padding: 12px 13px; }
+
+/* AI */
+.ai-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .ai-grid { grid-template-columns: 1fr; } }
+.earn, .thesis { padding: 22px; display: grid; gap: 16px; min-width: 0; }
+.earn-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 560px) { .kpis { grid-template-columns: 1fr 1fr; } }
+.kpi { background: var(--sunken); border-radius: 11px; padding: 10px 12px; min-width: 0; }
+.kpi span { display: block; font-size: 12px; color: var(--muted); }
+.kpi b { font: 500 19px var(--f-mono); display: block; }
+.kpi i { font: normal 12px var(--f-mono); color: var(--bull); }
+.kpi i.dn { color: var(--bear); }
+.ai-say { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: linear-gradient(135deg, var(--accent-soft), rgba(63, 214, 234, 0.07)); }
+.ai-chip { font: 500 12px var(--f-mono); color: var(--accent2); letter-spacing: 0.06em; text-transform: uppercase; }
+.ai-say p { margin-top: 8px; font-size: 16px; min-height: 7.6em; }
+.thesis h3 { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+.th-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.th-ic { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--f-mono); }
+.th-row.ok .th-ic { background: var(--bull-soft); color: var(--bull); } .th-row.warn .th-ic { background: var(--base-soft); color: var(--base); }
+.th-row b { font-weight: 500; font-size: 15.5px; display: block; }
+.th-row small { color: var(--muted); font-size: 13px; }
+.th-row em { font: normal 500 12px var(--f-mono); }
+.th-row.ok em { color: var(--bull); } .th-row.warn em { color: var(--base); }
+.th-verdict { display: flex; gap: 10px; font-size: 15px; }
+.ai-points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 32px; margin-top: 36px; }
+@media (max-width: 760px) { .ai-points { grid-template-columns: 1fr; } }
+.ai-points h3 { font-size: 18.5px; font-weight: 600; letter-spacing: -0.01em; }
+.ai-points p { color: var(--muted); font-size: 15.5px; margin-top: 4px; }
+
+/* Value */
+.value { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 32px; }
+@media (max-width: 860px) { .value { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .value { grid-template-columns: 1fr; } }
+.value h3 { font-size: 18.5px; font-weight: 600; letter-spacing: -0.01em; }
+.value p { color: var(--muted); font-size: 15.5px; margin-top: 4px; }
+.value .n { font: 500 30px var(--f-mono); color: var(--accent); display: block; margin-bottom: 6px; letter-spacing: -0.02em; }
+
+/* Pricing */
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; max-width: 820px; }
+@media (max-width: 700px) { .plans { grid-template-columns: 1fr; } }
+.plan { padding: 26px; display: grid; gap: 14px; align-content: start; position: relative; }
+.plan.best { border-color: var(--accent); box-shadow: var(--shadow); }
+.plan h3 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.plan .tag { position: absolute; top: 22px; right: 22px; font: 500 12px var(--f-mono); padding: 4px 10px; border-radius: 999px; background: var(--bull-soft); color: var(--bull); }
+.plan .price { display: flex; align-items: baseline; gap: 8px; }
+.plan .price b { font: 800 46px/1 var(--f-display); letter-spacing: -0.03em; }
+.plan .price span { color: var(--muted); font-size: 16px; }
+.plan .sub { color: var(--muted); font-size: 15px; min-height: 1.5em; }
+.plan .btn { width: 100%; }
+.plan .btn.alt { background: var(--sunken); color: var(--ink); }
+.includes { margin: 26px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 28px; max-width: 820px; font-size: 16px; }
+@media (max-width: 700px) { .includes { grid-template-columns: 1fr; } }
+.includes li { padding-left: 24px; position: relative; }
+.includes li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 9px; height: 5px; border-left: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg); }
+
+/* FAQ */
+.faq { display: grid; gap: 10px; max-width: 780px; }
+details { padding: 16px 18px; }
+summary { cursor: pointer; font-weight: 500; font-size: 17px; }
+details p { color: var(--muted); margin-top: 8px; font-size: 16px; }
+
+/* Final */
+.final { padding-block: 84px; }
+.final .wrap { display: grid; gap: 14px; justify-items: center; text-align: center; }
+.final h2 { font-size: clamp(34px, 5vw, 56px); font-weight: 800; line-height: 1; }
+.final .signup { margin-top: 12px; padding: 22px; text-align: left; width: 100%; max-width: 620px; }
+footer { border-top: 1px solid var(--line); padding-block: 24px 40px; color: var(--muted); font-size: 13px; }
+footer .wrap { display: grid; gap: 8px; }
+</style>
+
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="IntrinsiQAI home">IntrinsiQ<span class="ai">AI</span></a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#problem">The problem</a>
+      <a href="#what">What it does</a>
+      <a href="#ai">AI</a>
+      <a href="#why">Why it's different</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#questions">Questions</a>
+      <a class="btn" href="#join">Get notified</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <canvas id="field" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div>
+      <span class="badge"><i></i>AI valuation workspace · early-access list open</span>
+      <h1>Value it once. <span class="grad">Never lose it again.</span></h1>
+      <p class="lede">IntrinsiQAI keeps your bear, base and bull valuation of every stock next to its live price. Its AI reads each new filing against your thesis, and emails you when the price reaches the number you decided was worth paying.</p>
+      <form class="signup" data-form="hero" novalidate>
+        <div class="row">
+          <div class="field"><label class="sr" for="hero-email">Email</label><input id="hero-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+          <button class="btn" type="submit">Tell me when it's live</button>
+        </div>
+        <label class="consent" for="hero-consent"><input id="hero-consent" name="consent" type="checkbox" value="yes"><span>I agree to receive emails about IntrinsiQAI early access. Unsubscribe any time. <a href="privacy.html">Privacy Policy</a></span></label>
+        <div class="hp" aria-hidden="true"><label for="hero-company">Company</label><input id="hero-company" name="company" type="text" tabindex="-1" autocomplete="off"></div>
+        <p class="form-note" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <div class="card demo" aria-label="Example valuation you can try">
+      <div class="demo-head">
+        <div class="tk"><span class="sq">AD</span><div><b>Adobe</b><small>ADBE · Nasdaq</small></div></div>
+        <div class="px"><b id="d-price"></b><small id="d-price-note"></small></div>
+      </div>
+      <div class="ai-log" id="ai-log" aria-hidden="true"></div>
+      <div class="cases">
+        <div class="case bear"><span>Bear value</span><b data-count="289">$289</b></div>
+        <div class="case base"><span>Base value</span><b data-count="481">$481</b></div>
+        <div class="case bull"><span>Bull value</span><b data-count="757">$757</b></div>
+      </div>
+      <svg id="d-range" role="img" aria-label="Bear, base and bull values on a line with the share price and the alert price"></svg>
+      <div class="slide"><label for="d-slider"><span>Drag the share price</span><span class="num" id="d-out"></span></label><input id="d-slider" type="range" min="150" max="520" step="1"></div>
+      <div class="alert-row"><span id="d-text"></span><span class="pill wait" id="d-pill"></span></div>
+      <p class="fine">Example only. The three values come from mechanical starting assumptions in the working prototype, with a 50% margin of safety. Not a recommendation.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="problem">
+  <div class="wrap">
+    <div class="band-head reveal">
+      <p class="eyebrow">The problem</p>
+      <h2>The analysis gets done. Then it gets lost.</h2>
+    </div>
+    <div class="problem">
+      <p class="quote">"I analyse all these companies, find their intrinsic value under three cases, and then forget them."<small>The reason IntrinsiQAI exists, in its founder's words.</small></p>
+      <div class="pains">
+        <div class="pain"><h3>Your valuations live in scattered spreadsheets</h3><p>One file per company, each built slightly differently. Nothing shows them all against today's prices.</p></div>
+        <div class="pain"><h3>The price arrives when you're not looking</h3><p>A stock falls to the level you worked out months ago, and you only notice after it has bounced.</p></div>
+        <div class="pain"><h3>You redo work you already did</h3><p>What growth did you assume? What margin? Why? Without the thesis saved next to the number, every revisit starts from zero.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="what">
+  <div class="wrap">
+    <div class="band-head reveal">
+      <p class="eyebrow">What it does</p>
+      <h2>Research, value, watch. In one place.</h2>
+      <p>The figures below are from the working prototype, built on companies' own SEC filings.</p>
+    </div>
+    <div class="does">
+      <article class="card feature reveal">
+        <div class="copy">
+          <h3>Chart any KPI of any US-listed company</h3>
+          <p>Revenue, margins, free cash flow, returns on capital, share count, debt. Pick one and see up to twenty years of it.</p>
+          <ul><li>40+ KPIs per company</li><li>Annual, quarterly and trailing twelve months</li><li>Growth and averages over whatever history exists</li></ul>
+        </div>
+        <div class="viz">
+          <div class="chips" id="v-chips" role="group" aria-label="Choose a KPI"></div>
+          <svg id="v-rev" role="img"></svg>
+          <p class="fine" id="v-cap" aria-live="polite"></p>
+        </div>
+      </article>
+
+      <article class="card feature reveal">
+        <div class="copy">
+          <h3>Value it under three cases, with your assumptions</h3>
+          <p>Set growth, margins, buybacks and an exit multiple for a bear, base and bull case. Two methods run side by side: earnings and discounted cash flow.</p>
+          <ul><li>The company's own record sits next to every input</li><li>Sensible starting numbers for every stock</li><li>Your margin of safety sets the buy price</li></ul>
+        </div>
+        <div class="viz">
+          <div class="tbl"><table>
+            <thead><tr><th>Assumption</th><th class="bear">Bear</th><th class="base">Base</th><th class="bull">Bull</th></tr></thead>
+            <tbody>
+              <tr><td>Revenue growth<small>Record: 13.1% a year</small></td><td class="num">6.5%</td><td class="num">12.5%</td><td class="num">18%</td></tr>
+              <tr><td>Net margin<small>Record: 28.3% average</small></td><td class="num">25%</td><td class="num">28%</td><td class="num">30%</td></tr>
+              <tr><td>Exit P/E<small>Today: 13.3×</small></td><td class="num">17×</td><td class="num">22.5×</td><td class="num">29.5×</td></tr>
+              <tr><td><b>Intrinsic value</b></td><td class="num"><b>$289</b></td><td class="num"><b>$481</b></td><td class="num"><b>$757</b></td></tr>
+            </tbody>
+          </table></div>
+          <p class="fine">Adobe, example starting assumptions from the prototype.</p>
+        </div>
+      </article>
+
+      <article class="card feature reveal">
+        <div class="copy">
+          <h3>Save it, and let the price come to you</h3>
+          <p>Every valuation goes on a watchlist with your thesis note and an alert price. When the stock gets there, you get one email.</p>
+          <ul><li>All your valuations against today's prices</li><li>See how far each stock is from your number</li><li>A flag when new results come out after you saved</li></ul>
+        </div>
+        <div class="viz">
+          <div class="tbl"><table>
+            <thead><tr><th>Company</th><th>Price</th><th>Base value</th><th>Alert at</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><b>ADBE</b><small>Adobe</small></td><td class="num">$237.32</td><td class="num">$480.52</td><td class="num">$240.26</td><td><span class="pill go">Buy zone</span></td></tr>
+              <tr><td><b>ONON</b><small>On Holding</small></td><td class="num">$37.43</td><td class="num">$15.57</td><td class="num">$7.79</td><td><span class="pill wait">Watching</span></td></tr>
+              <tr><td><b>AAPL</b><small>Apple</small></td><td class="num">$350.69</td><td class="num">$173.54</td><td class="num">$86.77</td><td><span class="pill wait">Watching</span></td></tr>
+            </tbody>
+          </table></div>
+          <div class="mail"><div class="mail-h"><span>Email alert</span><b>ADBE hit your buy zone at $240.26</b></div><div class="mail-b">Adobe is trading 50% below your base-case value of $480.52. Check the latest results still support your thesis before acting.</div></div>
+          <p class="fine">Examples from the prototype's mechanical starting assumptions and prices of 10 Nov 2026. Not recommendations.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="ai">
+  <div class="wrap">
+    <div class="band-head reveal">
+      <p class="eyebrow">The AI part</p>
+      <h2>An analyst that remembers <span class="grad">your thesis.</span></h2>
+      <p>You set the assumptions. The AI does the reading: every new filing, checked against what you said had to be true.</p>
+    </div>
+    <div class="ai-grid">
+      <div class="card earn reveal" id="earn">
+        <div class="earn-top">
+          <div class="tk"><span class="sq">AD</span><div><b>Adobe · Q3 FY2026</b><small>Quarter ended 28 Aug 2026</small></div></div>
+          <span class="pill go">New filing read</span>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><span>Revenue</span><b>$6.76B</b><i>+12.9% YoY</i></div>
+          <div class="kpi"><span>Diluted EPS</span><b>$4.62</b><i>+10.5% YoY</i></div>
+          <div class="kpi"><span>Net margin</span><b>27.0%</b><i class="dn">−2.6 pts YoY</i></div>
+          <div class="kpi"><span>Diluted shares</span><b>396M</b><i>−6.6% YoY</i></div>
+        </div>
+        <div class="ai-say">
+          <span class="ai-chip"><span class="spark">✦</span> AI summary</span>
+          <p id="ai-summary" data-full="Adobe grew revenue 12.9% to $6.76B in the quarter to 28 August. Net income was $1.83B, a 27.0% margin, down from 29.6% a year earlier, while diluted EPS still rose 10.5% to $4.62 because the share count fell 6.6% on buybacks. Growth is holding; the margin is the number to watch.">Adobe grew revenue 12.9% to $6.76B in the quarter to 28 August. Net income was $1.83B, a 27.0% margin, down from 29.6% a year earlier, while diluted EPS still rose 10.5% to $4.62 because the share count fell 6.6% on buybacks. Growth is holding; the margin is the number to watch.</p>
+        </div>
+        <p class="fine">Example of the AI summary. The figures are from Adobe's Q3 FY2026 filing with the SEC.</p>
+      </div>
+      <div class="card thesis reveal">
+        <h3>Your base case vs. the quarter</h3>
+        <div>
+          <div class="th-row ok"><span class="th-ic">✓</span><div><b>Revenue growth</b><small>You assumed 12.5% · the quarter delivered 12.9%</small></div><em>On track</em></div>
+          <div class="th-row warn"><span class="th-ic">!</span><div><b>Net margin</b><small>You assumed 28% by year 5 · the quarter was 27.0%</small></div><em>Behind</em></div>
+          <div class="th-row ok"><span class="th-ic">✓</span><div><b>Buybacks</b><small>You assumed 2.5% a year · the count fell 6.6%</small></div><em>Ahead</em></div>
+        </div>
+        <div class="th-verdict"><span class="spark">✦</span><p>Thesis intact. Two of three assumptions are at or ahead of your base case. Your alert price stays at $240.26.</p></div>
+      </div>
+    </div>
+    <div class="ai-points reveal">
+      <div><h3>Reads every filing for you</h3><p>When a company you follow reports, the AI reads the numbers the day they land and tells you what changed, in plain English.</p></div>
+      <div><h3>Checks results against your thesis</h3><p>Each assumption you saved is compared with what the company actually delivered, so you know whether your valuation still stands.</p></div>
+      <div><h3>Starts every valuation for you</h3><p>Pick any stock and it opens with bear, base and bull cases already drafted from the company's own record. You edit, rather than start from a blank sheet.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="why">
+  <div class="wrap">
+    <div class="band-head reveal">
+      <p class="eyebrow">Why it's different</p>
+      <h2>Your judgement, kept and watched.</h2>
+      <p>Screeners give you someone else's fair value. A spreadsheet gives you yours, then goes stale. IntrinsiQAI keeps your number alive.</p>
+    </div>
+    <div class="value reveal">
+      <div><span class="n" data-count="6035">6,035</span><h3>Every NYSE and Nasdaq listing</h3><p>Search any of them. Financials for 5,491 companies come straight from their SEC filings, not a third-party summary.</p></div>
+      <div><span class="n">3</span><h3>Cases, not one target</h3><p>A single price target hides the range. Bear, base and bull make you write down what could go wrong and what could go right.</p></div>
+      <div><span class="n">0</span><h3>Black boxes</h3><p>Both formulas are on the page and every input is yours to change. You can always see why a value is what it is.</p></div>
+      <div><span class="n">$</span><h3>Foreign companies in dollars</h3><p>Companies that report in francs, euros or yen are converted to US dollars per US-listed share, so the value compares with the price you'd pay.</p></div>
+      <div><span class="n">1</span><h3>Email, at the right moment</h3><p>No daily noise. One alert when a stock reaches the price you set, with your thesis attached so you remember why.</p></div>
+      <div><span class="n">≈</span><h3>Honest about thin data</h3><p>A company with three years of history shows three-year growth. Where a figure is estimated or missing, the page says so.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="pricing">
+  <div class="wrap">
+    <div class="band-head reveal">
+      <p class="eyebrow">Pricing</p>
+      <h2>One plan. Pay monthly or yearly.</h2>
+      <p>Both options include everything. Joining the early-access list is free and commits you to nothing.</p>
+    </div>
+    <div class="plans reveal">
+      <div class="card plan">
+        <h3>Monthly</h3>
+        <div class="price"><b>$9.99</b><span>a month</span></div>
+        <p class="sub">Cancel any time.</p>
+        <a class="btn alt" href="#join">Get notified at launch</a>
+      </div>
+      <div class="card plan best">
+        <span class="tag">Save 25%</span>
+        <h3>Yearly</h3>
+        <div class="price"><b>$90</b><span>a year</span></div>
+        <p class="sub">Works out at $7.50 a month, $29.88 less than paying monthly.</p>
+        <a class="btn" href="#join">Get notified at launch</a>
+      </div>
+    </div>
+    <ul class="includes">
+      <li>KPI charts for every NYSE and Nasdaq listing</li>
+      <li>Bear, base and bull valuations with your assumptions</li>
+      <li>A watchlist of everything you've valued</li>
+      <li>Email alerts when a stock reaches your price</li>
+    </ul>
+    <p class="fine" style="margin-top:18px">Prices in US dollars. Nothing is charged until IntrinsiQAI launches and you choose a plan.</p>
+  </div>
+</section>
+
+<section class="band" id="questions">
+  <div class="wrap">
+    <div class="band-head reveal">
+      <p class="eyebrow">Questions</p>
+      <h2>Before you sign up</h2>
+    </div>
+    <div class="faq">
+      <details class="card" open><summary>Is this investment advice?</summary><p>No. IntrinsiQAI is a research tool. It does the arithmetic on your assumptions and watches prices for you. It does not tell you what to buy or sell.</p></details>
+      <details class="card"><summary>What does the AI actually do?</summary><p>It reads new filings, summarises what changed, and compares the results with the assumptions you saved. It drafts starting cases for you to edit. It does not pick stocks or set your assumptions for you, and its summaries can be wrong, so the filing figures are always shown beside them.</p></details>
+      <details class="card"><summary>Where does the data come from?</summary><p>Financial statements come from the SEC's EDGAR database, which holds what each company itself filed. Prices come from a market-data provider and are shown with the time they were taken.</p></details>
+      <details class="card"><summary>Which companies are covered?</summary><p>Everything listed on the NYSE and Nasdaq, including foreign companies listed there. Funds and a few issuers that file no structured financial statements are searchable but have nothing to chart.</p></details>
+      <details class="card"><summary>What does it cost?</summary><p>$9.99 a month, or $90 a year. Both include everything. Joining the early-access list is free, and nothing is charged until you choose a plan after launch.</p></details>
+      <details class="card"><summary>When does it launch?</summary><p>The date is not fixed yet. People on the early-access list will be emailed the day it opens.</p></details>
+      <details class="card"><summary>What happens to my email address?</summary><p>It is used for one thing: telling you about IntrinsiQAI early access. It is stored in the EU, never sold, and you can unsubscribe or ask for deletion at any time. See the <a href="privacy.html">Privacy Policy</a>.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="final" id="join">
+  <div class="wrap">
+    <p class="eyebrow">Early access</p>
+    <h2>Be told the day it opens.</h2>
+    <p class="muted">One email when IntrinsiQAI goes live. Nothing else.</p>
+    <form class="signup card" data-form="final" novalidate>
+      <div class="row">
+        <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+        <div class="field"><label for="f-how">How you value stocks today</label>
+          <select id="f-how" name="current_method"><option value="">Choose one (optional)</option><option>My own spreadsheet</option><option>A paid research tool</option><option>Analyst targets</option><option>I don't yet</option></select>
+        </div>
+      </div>
+      <label class="consent" for="f-consent"><input id="f-consent" name="consent" type="checkbox" value="yes"><span>I agree to receive emails about IntrinsiQAI early access. Unsubscribe any time. <a href="privacy.html">Privacy Policy</a></span></label>
+      <div class="hp" aria-hidden="true"><label for="f-company">Company</label><input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off"></div>
+      <button class="btn" type="submit">Join the early-access list</button>
+      <p class="form-note" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="logo" style="font-size:17px">IntrinsiQ<span class="ai">AI</span></span>
+    <p>Research tool, not investment advice. Example figures are from a working prototype using companies' SEC filings and share prices of 10 November 2026; the assumptions shown are illustrative. Company names are trademarks of their owners, and IntrinsiQAI is not affiliated with them. <a href="privacy.html">Privacy Policy</a></p>
+  </div>
+</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+function S(tag, attrs, text) { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); if (text != null) el.textContent = text; return el; }
+
+/* ---------- Sign-up ----------
+On the live site this posts to /api/waitlist (the function that stores sign-ups in the EU database).
+Anywhere else (a preview, a file opened from disk) the form validates and says sign-ups are not open yet. */
+const WAITLIST_ENDPOINT = "/api/waitlist";
+const CONSENT_TEXT = "I agree to receive emails about IntrinsiQAI early access. Unsubscribe any time.";
+const PREVIEW = location.protocol !== "https:" && location.protocol !== "http:" || /claude|localhost|127\.0\.0\.1/.test(location.hostname);
+document.querySelectorAll("form.signup").forEach((form) => {
+  const note = form.querySelector(".form-note");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = form.querySelector('input[type="email"]'), consent = form.querySelector('input[name="consent"]');
+    note.className = "form-note";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) { note.textContent = "Enter a valid email, like name@example.com."; note.classList.add("err"); email.focus(); return; }
+    if (!consent.checked) { note.textContent = "Tick the box to agree to early-access emails."; note.classList.add("err"); consent.focus(); return; }
+    if (PREVIEW) { note.textContent = "This is a preview. Sign-ups open when the site goes live, and nothing was saved."; note.classList.add("err"); return; }
+    const btn = form.querySelector("button[type=submit]"); btn.disabled = true; note.textContent = "Adding you…";
+    try {
+      const how = form.querySelector('select[name="current_method"]');
+      const res = await fetch(WAITLIST_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ email: email.value.trim(), current_method: how ? how.value : "", consent: true, consent_text: CONSENT_TEXT, source: form.dataset.form, company: form.querySelector('input[name="company"]').value }) });
+      if (!res.ok) throw new Error(String(res.status));
+      form.reset(); note.textContent = "You're on the list. We'll email you the day it opens."; note.classList.add("ok");
+    } catch { note.textContent = "That didn't go through. Check your connection and try again."; note.classList.add("err"); }
+    finally { btn.disabled = false; }
+  });
+});
+
+/* ---------- Hero demo: Adobe, prototype starting assumptions, 50% margin of safety ---------- */
+const DEMO = { bear: 289.36, base: 480.52, bull: 757.30, last: 237.32, mos: 0.5 };
+const ALERT = DEMO.base * (1 - DEMO.mos);
+function spread(items, gap, lo, hi) {
+  items.sort((a, b) => a.x - b.x);
+  for (let i = 0; i < items.length; i++) items[i].lx = Math.max(i ? items[i - 1].lx + gap : lo, Math.min(items[i].x, hi - gap * (items.length - 1 - i)));
+  for (let i = items.length - 2; i >= 0; i--) items[i].lx = Math.min(items[i].lx, items[i + 1].lx - gap);
+}
+function drawDemo(px) {
+  const svg = $("d-range"); svg.replaceChildren();
+  const W = Math.max(260, svg.parentElement.clientWidth - 40), H = 96, P = 30, lo = 120, hi = 800, X = (v) => P + ((v - lo) / (hi - lo)) * (W - 2 * P);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  svg.append(S("rect", { x: P, y: 42, width: W - 2 * P, height: 8, rx: 4, fill: tok("--sunken") }));
+  svg.append(S("rect", { x: P, y: 42, width: X(ALERT) - P, height: 8, rx: 4, fill: tok("--bull-soft") }));
+  svg.append(S("rect", { x: X(DEMO.bear), y: 42, width: X(DEMO.bull) - X(DEMO.bear), height: 8, rx: 4, fill: tok("--accent-soft") }));
+  const top = [["bear", "Bear"], ["base", "Base"], ["bull", "Bull"]].map(([k, l]) => ({ x: X(DEMO[k]), t: `${l} $${DEMO[k].toFixed(0)}`, c: "--" + k }));
+  spread(top, 74, 38, W - 38);
+  top.forEach((o) => { svg.append(S("circle", { cx: o.x, cy: 46, r: 6, fill: tok(o.c), stroke: tok("--surface"), "stroke-width": 2 })); svg.append(S("line", { x1: o.x, x2: o.lx, y1: 38, y2: 24, stroke: tok(o.c) })); svg.append(S("text", { x: o.lx, y: 18, "text-anchor": "middle", fill: tok("--ink") }, o.t)); });
+  const bot = [{ x: X(px), t: `Price $${px.toFixed(0)}`, c: "--ink", d: "" }, { x: X(ALERT), t: `Alert $${ALERT.toFixed(0)}`, c: "--bull", d: "3 2" }];
+  spread(bot, 82, 42, W - 42);
+  bot.forEach((o) => { svg.append(S("line", { x1: o.x, x2: o.x, y1: 34, y2: 58, stroke: tok(o.c), "stroke-width": 2, "stroke-dasharray": o.d })); svg.append(S("line", { x1: o.x, x2: o.lx, y1: 58, y2: 72, stroke: tok(o.c) })); svg.append(S("text", { x: o.lx, y: 86, "text-anchor": "middle", fill: tok("--ink") }, o.t)); });
+  $("d-price").textContent = "$" + px.toFixed(2);
+  $("d-price-note").textContent = Math.abs(px - DEMO.last) < 0.5 ? "last price, 10 Nov 2026" : "your test price";
+  $("d-out").textContent = "$" + px.toFixed(0);
+  const pill = $("d-pill"), gap = px / ALERT - 1;
+  if (px <= ALERT) { pill.className = "pill go"; pill.textContent = "Email sent"; $("d-text").textContent = `Reached your alert price of $${ALERT.toFixed(2)}.`; }
+  else if (gap <= 0.1) { pill.className = "pill near"; pill.textContent = "Within 10%"; $("d-text").textContent = `${(gap / (1 + gap) * 100).toFixed(0)}% above your alert price.`; }
+  else { pill.className = "pill wait"; pill.textContent = "Watching"; $("d-text").textContent = `The price has to fall ${(gap / (1 + gap) * 100).toFixed(0)}% to reach your alert.`; }
+}
+let demoPrice = 262;   // opens just above the alert line so the first drag shows it fire
+$("d-slider").value = demoPrice;
+$("d-slider").addEventListener("input", (e) => { demoPrice = +e.target.value; drawDemo(demoPrice); });
+
+/* ---------- KPI chart: Adobe fiscal 2016 to 2025, worked out from its SEC filings ---------- */
+const FY = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+const KPIS = [
+  { name: "Revenue", data: [5.85, 7.30, 9.03, 11.17, 12.87, 15.79, 17.61, 19.41, 21.50, 23.77], ticks: [0, 10, 20, 30], fmt: (v) => "$" + v.toFixed(1) + "B", tick: (v) => "$" + v + "B", cap: "Adobe revenue, fiscal 2016 to 2025: from $5.9B to $23.8B." },
+  { name: "EPS", data: [2.32, 3.38, 5.20, 6.00, 10.83, 10.02, 10.10, 11.82, 12.36, 16.70], ticks: [0, 5, 10, 15, 20], fmt: (v) => "$" + v.toFixed(2), tick: (v) => "$" + v, cap: "Diluted earnings per share: $2.32 to $16.70, about seven times higher." },
+  { name: "FCF margin", data: [34.1, 37.5, 41.7, 36.0, 41.2, 43.6, 42.0, 35.8, 36.6, 41.4], ticks: [0, 15, 30, 45], fmt: (v) => v.toFixed(1) + "%", tick: (v) => v + "%", cap: "Free cash flow as a share of revenue: between 34% and 44% every year." },
+  { name: "ROIC", data: [25.7, 37.9, 35.6, 29.0, 38.7, 40.0, 38.3, 43.5, 44.8, 61.6], ticks: [0, 20, 40, 60, 80], fmt: (v) => v.toFixed(1) + "%", tick: (v) => v + "%", cap: "Return on invested capital: 25.7% in fiscal 2016, 61.6% in fiscal 2025." },
+  { name: "Share count", data: [504, 501, 498, 492, 486, 481, 471, 459, 450, 427], ticks: [0, 200, 400, 600], fmt: (v) => Math.round(v) + "M", tick: (v) => v + "M", cap: "Diluted shares: down from 504M to 427M as buybacks retire stock." },
+  { name: "Net cash", data: [2.87, 3.94, -0.90, 0.04, 1.88, 1.68, 1.97, 4.21, 2.26, 0.39], ticks: [-2, 0, 2, 4, 6], fmt: (v) => (v < 0 ? "−$" : "$") + Math.abs(v).toFixed(2) + "B", tick: (v) => (v < 0 ? "−$" : "$") + Math.abs(v) + "B", cap: "Cash and investments less debt. Negative in fiscal 2018 after a large acquisition." },
+];
+let kpiOn = 0, kpiShown = KPIS[0].data.slice(), kpiLo = 0, kpiHi = 30, kpiAnim = 0, kpiHover = -1, kpiAuto = true;
+function drawKpiFrame(vals, lo, hi) {
+  const svg = $("v-rev"), k = KPIS[kpiOn]; svg.replaceChildren();
+  const W = Math.max(240, svg.parentElement.clientWidth - 32), H = 200, L = 44, R = 6, T = 22, B = 24, Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  svg.setAttribute("aria-label", `Adobe ${k.name.toLowerCase()} by fiscal year, 2016 to 2025`);
+  k.ticks.forEach((v) => { if (v < lo - 1e-9 || v > hi + 1e-9) return; svg.append(S("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: tok("--line"), "stroke-width": v === 0 ? 1.5 : 1 })); svg.append(S("text", { x: L - 6, y: Y(v) + 4, "text-anchor": "end", fill: tok("--muted") }, k.tick(v))); });
+  const n = vals.length, slot = (W - L - R) / n, bw = Math.min(34, slot - 3), label = kpiHover >= 0 ? kpiHover : n - 1;
+  vals.forEach((v, i) => {
+    const cx = L + i * slot + slot / 2, y0 = Y(0), y1 = Y(v), top = Math.min(y0, y1), h = Math.max(1.5, Math.abs(y1 - y0));
+    const r = S("rect", { class: "bar", x: cx - bw / 2, y: top, width: bw, height: h, rx: Math.min(4, h / 2), fill: tok(i === label ? "--accent2" : "--accent"), opacity: kpiHover >= 0 && i !== label ? 0.55 : 1 });
+    r.addEventListener("pointerenter", () => { kpiHover = i; kpiAuto = false; drawKpiFrame(kpiShown, kpiLo, kpiHi); });
+    svg.append(r);
+    if (i % 3 === 0 || i === n - 1) svg.append(S("text", { x: cx, y: H - 7, "text-anchor": "middle", fill: tok("--muted") }, "FY" + String(FY[i]).slice(2)));
+    if (i === label) svg.append(S("text", { x: Math.max(L + 30, Math.min(W - R - 30, cx)), y: (v >= 0 ? top : top + h + 14) - (v >= 0 ? 6 : 0), "text-anchor": "middle", fill: tok("--ink"), "font-weight": 500 }, (kpiHover >= 0 ? "FY" + String(FY[i]).slice(2) + " · " : "") + k.fmt(k.data[i])));
+  });
+}
+$("v-rev").addEventListener("pointerleave", () => { kpiHover = -1; drawKpiFrame(kpiShown, kpiLo, kpiHi); });
+function showKpi(i, animate) {
+  kpiOn = i; kpiHover = -1;
+  const k = KPIS[i], lo1 = k.ticks[0], hi1 = k.ticks[k.ticks.length - 1];
+  document.querySelectorAll("#v-chips .chip").forEach((c, j) => c.setAttribute("aria-pressed", String(j === i)));
+  $("v-cap").textContent = k.cap;
+  cancelAnimationFrame(kpiAnim);
+  if (!animate || REDUCED) { kpiShown = k.data.slice(); kpiLo = lo1; kpiHi = hi1; drawKpiFrame(kpiShown, kpiLo, kpiHi); return; }
+  // Bars first drop to the baseline of the new scale, then grow to the new values, staggered left to right.
+  const t0 = performance.now(), n = k.data.length;
+  kpiLo = lo1; kpiHi = hi1;
+  (function step(now) {
+    const t = now - t0;
+    kpiShown = k.data.map((v, j) => { const kk = Math.max(0, Math.min(1, (t - j * 35) / 520)); return v * (1 - Math.pow(1 - kk, 3)); });
+    drawKpiFrame(kpiShown, kpiLo, kpiHi);
+    if (t < 520 + n * 35) kpiAnim = requestAnimationFrame(step); else { kpiShown = k.data.slice(); drawKpiFrame(kpiShown, kpiLo, kpiHi); }
+  })(t0);
+}
+KPIS.forEach((k, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = k.name; b.addEventListener("click", () => { kpiAuto = false; showKpi(i, true); }); $("v-chips").append(b); });
+function drawRev() { drawKpiFrame(kpiShown, kpiLo, kpiHi); }
+let kpiSeen = false;
+if ("IntersectionObserver" in window) new IntersectionObserver(([en]) => { kpiSeen = en.isIntersecting; }, { threshold: 0.4 }).observe($("v-rev"));
+setInterval(() => { if (kpiAuto && kpiSeen && !document.hidden && !REDUCED) showKpi((kpiOn + 1) % KPIS.length, true); }, 3200);   // cycles on its own until you take over
+/* ---------- Motion: pointer field, card spotlight and tilt, AI log, typed summary, reveals ---------- */
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+(function field() {
+  const cv = $("field"), ctx = cv.getContext("2d");
+  let w, h, t = 0, mx = -999, my = -999, visible = true;
+  function size() { const d = Math.min(window.devicePixelRatio || 1, 2), r = cv.getBoundingClientRect(); w = r.width; h = r.height; cv.width = w * d; cv.height = h * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const c1 = tok("--accent"), c2 = tok("--accent2"), gap = 26;
+    for (let y = gap / 2; y < h; y += gap) for (let x = gap / 2; x < w; x += gap) {
+      const wave = Math.sin(x * 0.012 + t) * Math.cos(y * 0.018 - t * 0.7), near = Math.max(0, 1 - Math.hypot(x - mx, y - my) / 170);
+      ctx.globalAlpha = Math.max(0.05, 0.1 + wave * 0.13 + near * 0.7);
+      ctx.fillStyle = near > 0.2 ? c2 : c1;
+      ctx.beginPath(); ctx.arc(x, y, 1 + near * 1.8 + Math.max(0, wave) * 0.6, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function loop() { if (visible) { t += 0.012; draw(); } requestAnimationFrame(loop); }
+  size(); draw();
+  window.addEventListener("resize", () => { size(); draw(); });
+  const hero = cv.parentElement;
+  hero.addEventListener("pointermove", (e) => { const r = cv.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; if (REDUCED) draw(); });
+  hero.addEventListener("pointerleave", () => { mx = my = -999; if (REDUCED) draw(); });
+  if ("IntersectionObserver" in window) new IntersectionObserver(([en]) => { visible = en.isIntersecting; }).observe(cv);
+  if (!REDUCED) requestAnimationFrame(loop);
+})();
+document.addEventListener("pointermove", (e) => {
+  const card = e.target.closest && e.target.closest(".card");
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  card.style.setProperty("--mx", e.clientX - r.left + "px"); card.style.setProperty("--my", e.clientY - r.top + "px");
+});
+(function tilt() {
+  const card = document.querySelector(".demo");
+  if (REDUCED || !window.matchMedia("(hover: hover)").matches) return;
+  card.addEventListener("pointermove", (e) => { const r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5; card.style.transform = `perspective(900px) rotateX(${(-y * 3).toFixed(2)}deg) rotateY(${(x * 3).toFixed(2)}deg)`; });
+  card.addEventListener("pointerleave", () => { card.style.transform = ""; });
+})();
+function countUp(el, ms = 900) {
+  const to = +el.dataset.count, money = el.textContent.trim().startsWith("$");
+  if (REDUCED) return;
+  const t0 = performance.now();
+  (function step(now) { const k = Math.min(1, (now - t0) / ms), v = Math.round(to * (1 - Math.pow(1 - k, 3))); el.textContent = (money ? "$" : "") + v.toLocaleString("en-US"); if (k < 1) requestAnimationFrame(step); })(t0);
+}
+const LOG = [["Reading Adobe's SEC filings", "19 years"], ["Drafting bear, base and bull cases", "3 cases"], ["Running earnings and cash-flow models", "11% / 2%"], ["Checking against the price", "$237.32"]];
+(function runLog() {
+  const box = $("ai-log"), line = (text, res, done) => { const ln = document.createElement("div"); ln.className = "ln"; const ic = document.createElement("span"); ic.className = done ? "ok" : "spin"; if (done) ic.textContent = "✓"; const tx = document.createElement("span"); tx.textContent = text; ln.append(ic, tx); if (done && res) { const b = document.createElement("b"); b.textContent = res; ln.append(b); } return ln; };
+  if (REDUCED) { LOG.forEach(([t, r]) => box.append(line(t, r, true))); return; }
+  let i = 0;
+  (function next() {
+    if (i >= LOG.length) { document.querySelectorAll(".case b[data-count]").forEach((el) => countUp(el)); return; }
+    const [text, res] = LOG[i], ln = line(text, res, false); box.append(ln);
+    setTimeout(() => { ln.replaceWith(line(text, res, true)); i++; next(); }, 620 + Math.random() * 320);
+  })();
+})();
+let typed = false;
+function typeSummary() {
+  if (typed) return; typed = true;
+  const el = $("ai-summary"), full = el.dataset.full;
+  if (REDUCED) return;
+  let i = 0; const caret = document.createElement("span"); caret.className = "caret";
+  (function step() { i = Math.min(full.length, i + 3); el.textContent = full.slice(0, i); el.append(caret); if (i < full.length) setTimeout(step, 16); else setTimeout(() => caret.remove(), 1500); })();
+}
+(function reveals() {
+  const els = [...document.querySelectorAll(".reveal")];
+  const show = (el) => { el.classList.remove("pre"); if (el.id === "earn") typeSummary(); el.querySelectorAll(".n[data-count]").forEach((n) => countUp(n, 1400)); };
+  if (REDUCED || !("IntersectionObserver" in window)) { els.forEach(show); return; }
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { show(en.target); io.unobserve(en.target); } }), { threshold: 0.12 });
+  els.forEach((el) => { if (el.getBoundingClientRect().top < window.innerHeight) show(el); else { el.classList.add("pre"); io.observe(el); } });
+  setTimeout(() => els.forEach((el) => el.classList.remove("pre")), 6000);   // never leave content hidden if the observer stalls
+})();
+
+const redraw = () => { drawDemo(demoPrice); drawRev(); };
+showKpi(0, false);
+redraw();
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(redraw, 120); });
+</script>
+</body>
+</html>

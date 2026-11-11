@@ -1,0 +1,1007 @@
+<title>IntrinsiQAI Tester</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@300..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working tool in three stacked stations (explore KPIs, value three cases, watch), under a sticky company bar that carries the live price. Tokens follow the IntrinsiQAI landing page. */
+:root {
+  --bg: #F4F6FA; --surface: #FFFFFF; --sunken: #EBEEF4; --ink: #0D1424; --muted: #5A6579; --line: #DADFE8;
+  --accent: #2347E8; --accent2: #0EA5C0; --accent-ink: #FFFFFF; --accent-soft: rgba(35, 71, 232, 0.10);
+  --bear: #C93C3C; --base: #B07A06; --bull: #1C8553;
+  --bear-soft: rgba(201, 60, 60, 0.10); --base-soft: rgba(176, 122, 6, 0.12); --bull-soft: rgba(28, 133, 83, 0.11);
+  --f-display: "Geologica", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Geologica", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #080D16; --surface: #101827; --sunken: #0C1320; --ink: #E8ECF4; --muted: #93A0B7; --line: #222E42;
+    --accent: #7790FF; --accent2: #3FD6EA; --accent-ink: #080D16; --accent-soft: rgba(119, 144, 255, 0.14);
+    --bear: #EF7171; --base: #D9A441; --bull: #4CC08A;
+    --bear-soft: rgba(239, 113, 113, 0.13); --base-soft: rgba(227, 174, 71, 0.13); --bull-soft: rgba(76, 192, 138, 0.13);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #080D16; --surface: #101827; --sunken: #0C1320; --ink: #E8ECF4; --muted: #93A0B7; --line: #222E42;
+  --accent: #7790FF; --accent2: #3FD6EA; --accent-ink: #080D16; --accent-soft: rgba(119, 144, 255, 0.14);
+  --bear: #EF7171; --base: #D9A441; --bull: #4CC08A;
+  --bear-soft: rgba(239, 113, 113, 0.13); --base-soft: rgba(227, 174, 71, 0.13); --bull-soft: rgba(76, 192, 138, 0.13);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 300 15px/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Company bar */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 10px; }
+.logo { font-family: var(--f-display); font-weight: 800; font-size: 20px; letter-spacing: -0.03em; display: inline-flex; align-items: center; }
+.logo { font-weight: 700; }
+.logo .ai { font-weight: 300; color: var(--accent); }
+.co { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.co .sq { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: var(--sunken); font-family: var(--f-mono); font-size: 12px; color: var(--muted); flex: none; }
+.co b { font-family: var(--f-display); font-size: 17px; display: block; line-height: 1.15; }
+.co small { color: var(--muted); font-size: 12px; }
+.quote { display: grid; grid-template-columns: auto auto; gap: 0 8px; align-items: baseline; justify-content: start; }
+.quote b { font-size: 21px; font-weight: 500; }
+.quote span { font-size: 13px; }
+.quote span.up { color: var(--bull); } .quote span.down { color: var(--bear); }
+.quote small { grid-column: 1 / -1; color: var(--muted); font-size: 11.5px; }
+.linkish { border: 0; background: transparent; color: var(--accent); font-size: 12px; padding: 0; cursor: pointer; text-decoration: underline; }
+.find { position: relative; flex: 1 1 200px; max-width: 300px; min-width: 0; }
+.find input { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; }
+.find-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; box-shadow: 0 18px 40px -18px rgba(13, 20, 36, 0.45); max-height: 340px; overflow-y: auto; z-index: 8; }
+.find-list button { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 8px; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 9px; border-radius: 8px; cursor: pointer; font-size: 13.5px; align-items: baseline; }
+.find-list button:hover, .find-list button.on { background: var(--accent-soft); }
+.find-list button b { font-family: var(--f-mono); font-weight: 500; }
+.find-list button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.find-list button small, .find-list p { color: var(--muted); font-size: 11.5px; }
+.find-list p { padding: 8px 9px; }
+.price-box { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.price-box label { font-size: 12px; color: var(--muted); text-align: right; line-height: 1.25; }
+.price-box .in { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding-left: 10px; }
+.price-box input { width: 112px; border: 0; background: transparent; padding: 8px 8px 8px 2px; font: 500 17px var(--f-mono); }
+.nav { display: flex; gap: 4px; background: var(--sunken); padding: 3px; border-radius: 10px; }
+.nav a { font-size: 13.5px; font-weight: 500; color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 8px; white-space: nowrap; }
+.nav a:hover { color: var(--ink); background: var(--surface); }
+@media (max-width: 720px) { .find { max-width: none; flex-basis: 100%; order: 2; } .logo { display: none; } .price-box { margin-left: 0; } .nav { order: 3; width: 100%; } .nav a { flex: 1; text-align: center; padding-inline: 4px; } }
+
+main { display: grid; gap: 56px; padding-block: 28px 64px; }
+section { scroll-margin-top: 120px; display: grid; gap: 16px; }
+.sec-head { display: grid; gap: 4px; }
+.sec-head h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 800; }
+.sec-head p { color: var(--muted); max-width: 70ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 14px/1 var(--f-body); padding: 12px 16px; border-radius: 10px; border: 0; cursor: pointer; background: var(--accent); color: var(--accent-ink); white-space: nowrap; }
+.btn.ghost { background: var(--sunken); color: var(--ink); }
+.btn.small { padding: 8px 11px; font-size: 13px; }
+.seg { display: inline-flex; background: var(--sunken); padding: 3px; border-radius: 9px; gap: 2px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: 500 13px var(--f-body); padding: 6px 11px; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(13, 20, 36, 0.12); }
+
+/* KPI explorer */
+.explorer { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 16px; align-items: start; }
+.kpi-list { padding: 12px; display: grid; gap: 10px; max-height: 620px; overflow-y: auto; }
+.kpi-list input { width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); font-size: 14px; }
+.kpi-group h3 { font: 500 11px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 4px 6px; }
+.kpi-group button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 6px 8px; border-radius: 7px; cursor: pointer; font-size: 14px; }
+.kpi-group button:hover { background: var(--sunken); }
+.kpi-group button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.chart-card { padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.chart-top { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; align-items: start; }
+.chart-top h3 { font-size: 22px; }
+.chart-top p { font-size: 13px; color: var(--muted); max-width: 52ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+.stat span { display: block; font-size: 12px; color: var(--muted); }
+.stat b { font: 500 19px var(--f-mono); }
+.plot { position: relative; min-width: 0; }
+.plot svg { display: block; width: 100%; }
+.plot svg text { font-family: var(--f-mono); font-size: 11px; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); padding: 7px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -100%); z-index: 3; }
+.tip b { font-family: var(--f-mono); font-weight: 500; display: block; font-size: 14px; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font: 500 11px var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+td.num, td .num { font-family: var(--f-mono); }
+.data-tbl { max-height: 300px; overflow: auto; }
+.src { font-size: 12px; color: var(--muted); }
+@media (max-width: 860px) { .explorer { grid-template-columns: 1fr; } .kpi-list { max-height: 230px; } }
+
+/* Valuation */
+.val-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 960px) { .val-grid { grid-template-columns: 1fr; } }
+.assume { padding: 6px 6px 14px; min-width: 0; }
+.assume table { min-width: 560px; }
+.assume th.bear, .out-h.bear { color: var(--bear); } .assume th.base, .out-h.base { color: var(--base); } .assume th.bull, .out-h.bull { color: var(--bull); }
+.assume td { padding: 6px 8px; }
+.assume td:first-child { white-space: normal; min-width: 150px; }
+.assume td:first-child small, .hist { display: block; font-size: 11.5px; color: var(--muted); font-family: var(--f-body); }
+.assume td.hist-c { text-align: left; white-space: normal; font-size: 12px; color: var(--muted); min-width: 130px; }
+.cell { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding-right: 7px; }
+.cell input { width: 58px; border: 0; background: transparent; padding: 7px 2px 7px 8px; font: 500 14px var(--f-mono); text-align: right; }
+.cell span { font: 12px var(--f-mono); color: var(--muted); }
+.cell:focus-within { outline: 2px solid var(--accent); }
+.cell input:focus { outline: 0; }
+.shared { display: flex; flex-wrap: wrap; gap: 12px 18px; padding: 14px 12px 0; align-items: end; }
+.shared label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.shared select { padding: 7px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-size: 14px; }
+.results { padding: 18px; display: grid; gap: 16px; min-width: 0; }
+.outs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.out { border-radius: 11px; padding: 12px; min-width: 0; display: grid; gap: 2px; }
+.out.bear { background: var(--bear-soft); } .out.base { background: var(--base-soft); } .out.bull { background: var(--bull-soft); }
+.out-h { font: 600 13px var(--f-body); }
+.out .iv { font: 500 clamp(19px, 2.6vw, 26px) var(--f-mono); }
+.out dl { margin: 6px 0 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 6px; font-size: 12px; color: var(--muted); }
+.out dd { margin: 0; font-family: var(--f-mono); color: var(--ink); text-align: right; }
+@media (max-width: 460px) { .outs { grid-template-columns: 1fr; } }
+.verdict { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 11px; border: 1px dashed var(--line); font-size: 14px; }
+.pill { font: 500 12px var(--f-mono); padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.wait { background: var(--sunken); color: var(--muted); } .pill.near { background: var(--base-soft); color: var(--base); } .pill.go { background: var(--bull-soft); color: var(--bull); }
+.sub-h { font: 600 14px var(--f-body); letter-spacing: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+.save-row { display: grid; gap: 10px; }
+.save-row textarea { width: 100%; min-height: 62px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); resize: vertical; }
+.save-row .line { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.save-row label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); flex: 1 1 200px; }
+.save-row select, .save-row input[type="number"] { padding: 9px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg); font-size: 14px; width: 100%; }
+.notice { padding: 12px 14px; font-size: 14px; color: var(--muted); }
+.notice b { color: var(--ink); }
+.seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+.note { font-size: 13px; color: var(--muted); min-height: 1.4em; }
+.note.ok { color: var(--bull); font-weight: 500; }
+
+/* Watchlist */
+.watch-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 960px) { .watch-grid { grid-template-columns: 1fr; } }
+.wl { padding: 6px 6px 12px; min-width: 0; }
+.wl table { min-width: 640px; }
+.wl td b { font-family: var(--f-display); font-size: 15px; }
+.wl tbody tr { cursor: pointer; }
+.wl tbody tr[aria-current="true"] td { background: var(--accent-soft); }
+.wl td small { display: block; color: var(--muted); font-size: 11.5px; }
+.empty { padding: 28px 18px; text-align: center; color: var(--muted); display: grid; gap: 10px; justify-items: center; }
+.wl-detail { padding: 14px 12px 4px; display: grid; gap: 12px; }
+.thesis { background: var(--sunken); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; white-space: pre-wrap; }
+.sim { padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.sim input[type="range"] { width: 100%; accent-color: var(--accent); }
+.mail { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.mail-h { background: var(--sunken); padding: 10px 14px; font-size: 12.5px; color: var(--muted); display: grid; gap: 2px; }
+.mail-h b { color: var(--ink); font-size: 14px; }
+.mail-b { padding: 14px; display: grid; gap: 10px; font-size: 14px; }
+.mail-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mail-stats div { background: var(--sunken); border-radius: 9px; padding: 8px 10px; }
+.mail-stats span { display: block; font-size: 11px; color: var(--muted); }
+.mail-stats b { font: 500 15px var(--f-mono); }
+footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var(--muted); font-size: 12.5px; }
+@media (prefers-reduced-motion: no-preference) { .kpi-group button, .nav a, .seg button { transition: background 0.15s, color 0.15s; } }
+</style>
+
+<header class="bar">
+  <div class="wrap">
+    <span class="logo">IntrinsiQ<span class="ai">AI</span></span>
+    <div class="co"><span class="sq" id="co-sq"></span><div><b id="co-name"></b><small id="co-sub"></small></div></div>
+    <div class="quote" id="quote" hidden><b class="num" id="q-price"></b><span class="num" id="q-chg"></span><small id="q-sub"></small></div>
+    <div class="find"><input id="find" type="search" placeholder="Search ticker or company" autocomplete="off" aria-label="Search companies" aria-controls="find-list"><div class="find-list" id="find-list" role="listbox" hidden></div></div>
+    <nav class="nav" aria-label="Sections"><a href="#kpis">KPIs</a><a href="#valuation">Valuation</a><a href="#watchlist">Watchlist</a></nav>
+    <div class="price-box">
+      <label for="price">Price used in the model<br><span id="price-note"></span> <button class="linkish" id="price-reset" type="button" hidden>use last price</button></label>
+      <div class="in"><span class="num muted" id="cur-sym">$</span><input id="price" type="number" min="1" step="0.01" inputmode="decimal"></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="card notice" id="none-banner" hidden></div>
+  <section id="kpis">
+    <div class="sec-head">
+      <p class="eyebrow">Financials, charted</p>
+      <h2>Pick any KPI</h2>
+      <p id="kpi-lede"></p>
+    </div>
+    <div class="explorer">
+      <div class="card kpi-list">
+        <input id="kpi-search" type="search" placeholder="Search KPIs" aria-label="Search KPIs">
+        <div id="kpi-groups"></div>
+      </div>
+      <div class="card chart-card">
+        <div class="chart-top">
+          <div><h3 id="k-title"></h3><p id="k-desc"></p></div>
+          <div class="controls">
+            <div class="seg" id="seg-mode" role="group" aria-label="Period"><button data-v="A">Annual</button><button data-v="Q">Quarterly</button><button data-v="T">Trailing 12m</button></div>
+            <div class="seg" id="seg-range" role="group" aria-label="Range"><button data-v="5">5y</button><button data-v="10">10y</button><button data-v="99">All</button></div>
+            <div class="seg" id="seg-view" role="group" aria-label="View"><button data-v="chart">Chart</button><button data-v="table">Table</button></div>
+          </div>
+        </div>
+        <div class="stats" id="k-stats"></div>
+        <div class="plot" id="k-plot"><svg id="k-svg" role="img"></svg><div class="tip" id="k-tip" hidden></div></div>
+        <div class="tbl data-tbl" id="k-table" hidden></div>
+        <p class="src" id="k-src"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="valuation">
+    <div class="sec-head">
+      <p class="eyebrow">Valuation</p>
+      <h2>Three cases, your assumptions</h2>
+      <p>Five-year forecast from the latest twelve months. The starting numbers are worked out mechanically from the company's own record (the last five years, or fewer if that is all it has filed), so every stock opens with something sensible. Replace them with yours.</p>
+    </div>
+    <p class="notice card" id="cur-note" hidden></p>
+    <div class="card empty" id="val-none" hidden></div>
+    <div class="val-grid" id="val-grid">
+      <div class="card assume">
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Assumption</th><th class="bear">Bear</th><th class="base">Base</th><th class="bull">Bull</th><th style="text-align:left" id="rec-h"></th></tr></thead>
+            <tbody id="assume-body"></tbody>
+          </table>
+        </div>
+        <div class="shared">
+          <label for="in-r">Discount rate<span class="cell"><input id="in-r" type="number" step="0.5" min="4" max="25"><span>%</span></span></label>
+          <label for="in-tg">Terminal growth<span class="cell"><input id="in-tg" type="number" step="0.25" min="0" max="5"><span>%</span></span></label>
+          <label for="in-mos">Margin of safety<span class="cell"><input id="in-mos" type="number" step="5" min="0" max="80"><span>%</span></span></label>
+          <label for="in-method">Intrinsic value uses<select id="in-method"><option value="avg">Average of EPS and DCF</option><option value="eps">EPS method only</option><option value="dcf">DCF only</option></select></label>
+          <button class="btn ghost small" id="reset" type="button">Reset to starting numbers</button>
+        </div>
+      </div>
+      <div class="card results">
+        <div class="outs" id="outs"></div>
+        <div class="plot"><svg id="range-svg" role="img" aria-label="Bear, base and bull value against the share price and your buy-below price"></svg></div>
+        <div class="verdict"><span id="verdict-text"></span><span class="pill wait" id="verdict-pill"></span></div>
+        <div>
+          <h3 class="sub-h">Earnings per share: record and your three paths</h3>
+          <div class="legend" style="margin-top:6px"><span><i style="background:var(--accent)"></i>Reported (fiscal years, then latest 12 months)</span><span><i style="background:var(--bear)"></i>Bear</span><span><i style="background:var(--base)"></i>Base</span><span><i style="background:var(--bull)"></i>Bull</span></div>
+        </div>
+        <div class="plot" id="eps-plot"><svg id="eps-svg" role="img" aria-label="Reported earnings per share and projected paths for the three cases"></svg><div class="tip" id="eps-tip" hidden></div></div>
+        <div class="save-row">
+          <label for="thesis" style="flex:none">Thesis note (what has to be true)<textarea id="thesis" placeholder="e.g. pricing power holds, buybacks keep retiring 3% a year, margins stay near today's level."></textarea></label>
+          <div class="line">
+            <label for="alert-rule">Email me when the price falls to
+              <select id="alert-rule"><option value="mos">Base value less margin of safety</option><option value="base">Base value</option><option value="bear">Bear value</option><option value="custom">A price I set</option></select>
+            </label>
+            <label for="alert-custom" id="alert-custom-wrap" hidden><span id="alert-custom-l">Alert price</span><input id="alert-custom" type="number" min="1" step="1"></label>
+            <button class="btn" id="save" type="button">Save to watchlist</button>
+          </div>
+          <p class="note" id="save-note" role="status"></p>
+        </div>
+      </div>
+    </div>
+    <p class="src">EPS method: revenue₅ × net margin ÷ shares₅ × exit P/E, discounted back. DCF: five years of free cash flow plus a terminal value, discounted, plus net cash, per current diluted share. Research tool, not investment advice.</p>
+  </section>
+
+  <section id="watchlist">
+    <div class="sec-head">
+      <p class="eyebrow">Watchlist</p>
+      <h2>Where your valuations live</h2>
+      <p>Every saved valuation, measured against today's price. <span id="store-note"></span></p>
+    </div>
+    <div class="watch-grid">
+      <div class="card wl" id="wl"></div>
+      <div class="card sim">
+        <h3 class="sub-h">Test the alert</h3>
+        <label for="sim" class="muted" style="font-size:13px">Drag the price to see when the alert fires. <b class="num" id="sim-out" style="color:var(--ink)"></b></label>
+        <input id="sim" type="range" step="0.5">
+        <div class="mail" id="mail"></div>
+        <p class="src">This tester sends nothing. The live version checks prices on a schedule and emails you once when the line is crossed.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script>
+const DATA = {}, shards = {};
+let INDEX = [];
+let D, A, Q, T, li, CO, CUR = "$";
+const SYMBOL = { USD: "$", EUR: "€", GBP: "£", JPY: "¥", CNY: "CN¥", CAD: "C$", AUD: "A$", CHF: "CHF ", INR: "₹", KRW: "₩", BRL: "R$", MXN: "MX$", HKD: "HK$", TWD: "NT$", ILS: "₪", ZAR: "R " };
+const $ = (id) => document.getElementById(id);
+const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+function S(tag, attrs, text) { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); if (text != null) el.textContent = text; return el; }
+function H(tag, cls, text) { const el = document.createElement(tag); if (cls) el.className = cls; if (text != null) el.textContent = text; return el; }
+const ok = (v) => v != null && isFinite(v);
+
+/* ---------- Data sets: annual, quarterly, trailing twelve months ---------- */
+function buildSets() {
+  A = { id: "A", lag: 1, label: D.annual.fy.map((y) => "FY" + String(y).slice(2)), s: D.annual.series, per: 1 };
+  D.noQ = D.quarterly.label.length < 2;
+  if (D.noQ) { Q = T = A; D.hasT = false; return; }   // annual-only filer: every view reads the annual figures
+  const per = D.quarterly.per || 4;   // 4 quarters a year, or 2 for companies that file half-yearly
+  Q = { id: "Q", lag: per, label: D.quarterly.label, s: D.quarterly.series, per };
+  T = { id: "T", lag: per, label: D.quarterly.label, s: {}, per };
+  for (const k in Q.s) {
+    const kind = D.kinds[k], q = Q.s[k];
+    T.s[k] = q.map((v, i) => {
+      if (kind === "stock" || kind === "avg") return v;
+      if (i < per - 1) return null;
+      const w = q.slice(i - per + 1, i + 1);
+      return w.every(ok) ? w.reduce((x, y) => x + y, 0) : null;
+    });
+  }
+  D.hasT = ["revenue", "netInc", "cfo"].some((k) => T.s[k] && T.s[k].some(ok));
+}
+const N = (ds) => ds.label.length;
+const g = (ds, k, i) => (i < 0 || !ds.s[k] ? null : ds.s[k][i] ?? null);
+const div = (a, b) => (ok(a) && ok(b) && b !== 0 ? a / b : null);
+const sub = (a, b) => (ok(a) && ok(b) ? a - b : null);
+const debt = (ds, i) => { const l = g(ds, "debtLT", i), c = g(ds, "debtCur", i); return l == null && c == null ? null : (l || 0) + (c || 0) + (g(ds, "commercialPaper", i) || 0); };
+const liquid = (ds, i) => { const c = g(ds, "cash", i); return c == null ? null : c + (g(ds, "sti", i) || 0) + (g(ds, "ltInv", i) || 0); };
+const fcf = (ds, i) => sub(g(ds, "cfo", i), g(ds, "capex", i));
+const yoy = (f) => (ds, i) => { const a = f(ds, i), b = f(ds, i - ds.lag); return ok(a) && ok(b) && b > 0 ? a / b - 1 : null; };
+const raw = (k) => (ds, i) => g(ds, k, i);
+const ofRev = (f) => (ds, i) => div(f(ds, i), g(ds, "revenue", i));
+const avg2 = (f, ds, i) => { const a = f(ds, i), b = f(ds, i - ds.lag); return ok(a) && ok(b) ? (a + b) / 2 : a; };
+const invCap = (ds, i) => { const e = g(ds, "equity", i), d = debt(ds, i), c = liquid(ds, i); return ok(e) && ok(c) ? e + (d || 0) - c : null; };
+const nopat = (ds, i) => { const o = g(ds, "opInc", i), t = g(ds, "tax", i), n = g(ds, "netInc", i); if (!ok(o) || !ok(t) || !ok(n) || n + t <= 0) return null; return o * (1 - Math.min(0.5, Math.max(0, t / (n + t)))); };
+
+/* unit: usd (dollars), eps ($/share), pct (fraction), x (ratio), sh (shares), days. ttm: a ratio that only makes sense on 12 months of flow. */
+const ALL_METRICS = [
+  ["Growth", "revenue", "Revenue", "usd", raw("revenue"), "Total revenue."],
+  ["Growth", "revG", "Revenue growth", "pct", yoy(raw("revenue")), "Change in revenue against the same period a year earlier."],
+  ["Growth", "grossProfit", "Gross profit", "usd", raw("grossProfit"), "Revenue less cost of revenue."],
+  ["Growth", "opInc", "Operating income", "usd", raw("opInc"), "GAAP operating income."],
+  ["Growth", "netInc", "Net income", "usd", raw("netInc"), "GAAP net income."],
+  ["Growth", "eps", "EPS (diluted)", "eps", raw("epsDil"), "GAAP diluted earnings per share."],
+  ["Growth", "epsG", "EPS growth", "pct", yoy(raw("epsDil")), "Change in diluted EPS against the same period a year earlier."],
+  ["Growth", "rpo", "Remaining performance obligations", "usd", raw("rpo"), "Contracted revenue not yet recognised. A forward indicator for subscription businesses."],
+  ["Growth", "deferredRev", "Deferred revenue", "usd", raw("deferredRev"), "Cash collected for services not yet delivered (current portion)."],
+  ["Margins", "gm", "Gross margin", "pct", ofRev(raw("grossProfit")), "Gross profit as a share of revenue."],
+  ["Margins", "om", "Operating margin", "pct", ofRev(raw("opInc")), "Operating income as a share of revenue."],
+  ["Margins", "nm", "Net margin", "pct", ofRev(raw("netInc")), "Net income as a share of revenue."],
+  ["Margins", "fcfm", "FCF margin", "pct", ofRev(fcf), "Free cash flow as a share of revenue."],
+  ["Margins", "rdP", "R&D % of revenue", "pct", ofRev(raw("rd")), "Research and development spend as a share of revenue."],
+  ["Margins", "smP", "Sales & marketing % of revenue", "pct", ofRev(raw("sm")), "Sales and marketing spend as a share of revenue."],
+  ["Margins", "gaP", "G&A % of revenue", "pct", ofRev(raw("ga")), "General and administrative spend as a share of revenue."],
+  ["Margins", "sgaP", "SG&A % of revenue", "pct", ofRev(raw("sga")), "Selling, general and administrative spend as a share of revenue."],
+  ["Margins", "sbcP", "Stock comp % of revenue", "pct", ofRev(raw("sbc")), "Stock-based compensation as a share of revenue."],
+  ["Margins", "taxR", "Effective tax rate", "pct", (ds, i) => { const t = g(ds, "tax", i), n = g(ds, "netInc", i); return ok(t) && ok(n) && n + t > 0 ? t / (n + t) : null; }, "Income tax as a share of pre-tax income."],
+  ["Cash flow", "cfo", "Operating cash flow", "usd", raw("cfo"), "Cash generated by operations."],
+  ["Cash flow", "fcf", "Free cash flow", "usd", fcf, "Operating cash flow less capital expenditure."],
+  ["Cash flow", "fcfSbc", "FCF after stock comp", "usd", (ds, i) => sub(fcf(ds, i), g(ds, "sbc", i)), "Free cash flow less stock-based compensation, treating share awards as a real cost."],
+  ["Cash flow", "fcfPs", "FCF per share", "eps", (ds, i) => div(fcf(ds, i), g(ds, "sharesDil", i)), "Free cash flow divided by diluted shares."],
+  ["Cash flow", "conv", "Cash conversion", "pct", (ds, i) => div(fcf(ds, i), g(ds, "netInc", i)), "Free cash flow as a share of net income. Above 100% means earnings are backed by cash."],
+  ["Cash flow", "capex", "Capital expenditure", "usd", raw("capex"), "Purchases of property and equipment."],
+  ["Cash flow", "sbc", "Stock-based compensation", "usd", raw("sbc"), "Non-cash share awards expensed in the period."],
+  ["Cash flow", "buybacks", "Share repurchases", "usd", raw("buybacks"), "Cash spent buying back stock."],
+  ["Cash flow", "dividends", "Dividends paid", "usd", raw("dividends"), "Cash paid to shareholders as dividends."],
+  ["Cash flow", "acq", "Acquisitions", "usd", raw("acquisitions"), "Cash paid for acquisitions, net of cash acquired."],
+  ["Returns", "roic", "ROIC", "pct", (ds, i) => div(nopat(ds, i), avg2(invCap, ds, i)), "After-tax operating income over average invested capital (equity plus debt less cash and investments).", true],
+  ["Returns", "roe", "ROE", "pct", (ds, i) => div(g(ds, "netInc", i), avg2(raw("equity"), ds, i)), "Net income over average shareholders' equity. Buybacks shrink equity and lift this figure.", true],
+  ["Returns", "roa", "ROA", "pct", (ds, i) => div(g(ds, "netInc", i), avg2(raw("assets"), ds, i)), "Net income over average total assets.", true],
+  ["Balance sheet", "liquid", "Cash & investments", "usd", liquid, "Cash, equivalents and marketable securities, short and long term."],
+  ["Balance sheet", "debt", "Total debt", "usd", debt, "Current and long-term debt, including commercial paper."],
+  ["Balance sheet", "netCash", "Net cash", "usd", (ds, i) => sub(liquid(ds, i), debt(ds, i) ?? 0), "Cash and investments less debt. Negative means net debt."],
+  ["Balance sheet", "equity", "Shareholders' equity", "usd", raw("equity"), "Book value of equity."],
+  ["Balance sheet", "goodwill", "Goodwill", "usd", raw("goodwill"), "Premium paid for past acquisitions."],
+  ["Balance sheet", "assets", "Total assets", "usd", raw("assets"), "Everything on the balance sheet."],
+  ["Balance sheet", "de", "Debt / equity", "x", (ds, i) => div(debt(ds, i), g(ds, "equity", i)), "Total debt divided by shareholders' equity."],
+  ["Balance sheet", "cur", "Current ratio", "x", (ds, i) => div(g(ds, "curAssets", i), g(ds, "curLiab", i)), "Current assets divided by current liabilities."],
+  ["Balance sheet", "dso", "Days sales outstanding", "days", (ds, i) => { const r = div(g(ds, "receivables", i), g(ds, "revenue", i)); return ok(r) ? r * 365 : null; }, "Receivables measured in days of revenue.", true],
+  ["Shares", "sharesDil", "Diluted shares", "sh", raw("sharesDil"), "Weighted-average diluted shares for the period."],
+  ["Shares", "sharesOut", "Shares outstanding", "sh", raw("sharesOut"), "Shares outstanding at period end."],
+  ["Shares", "shG", "Share count change", "pct", yoy(raw("sharesDil")), "Change in diluted shares against a year earlier. Negative means buybacks are outrunning dilution."],
+].map(([group, key, name, unit, fn, desc, ttm]) => ({ group, key, name, unit, fn, desc, ttm: !!ttm }));
+let METRICS = ALL_METRICS;
+
+function fmt(v, unit, short) {
+  if (!ok(v)) return "n/a";
+  const neg = v < 0 ? "−" : "", a = Math.abs(v);
+  if (unit === "usd") return neg + CUR + (a >= 1e12 ? (a / 1e12).toFixed(a >= 1e14 || short ? 1 : 2) + "T" : a >= 1e9 ? (a / 1e9).toFixed(a >= 1e11 || short ? 1 : 2) + "B" : a >= 1e6 || a === 0 ? (a / 1e6).toFixed(0) + "M" : (a / 1e3).toFixed(0) + "K");
+  if (unit === "eps") return neg + CUR + a.toFixed(short && a >= 100 ? 0 : 2);
+  if (unit === "pct") return neg + (a * 100).toFixed(short && a >= 0.2 ? 0 : 1) + "%";
+  if (unit === "x") return neg + a.toFixed(2) + "×";
+  if (unit === "sh") return neg + (a >= 1e9 ? (a / 1e9).toFixed(short ? 1 : 2) + "B" : (a / 1e6).toFixed(short ? 0 : 1) + "M");
+  if (unit === "days") return neg + a.toFixed(0) + " days";
+  return String(v);
+}
+const usd = (v) => (ok(v) ? (v < 0 ? "−" : "") + CUR + Math.abs(v).toFixed(Math.abs(v) >= 10000 ? 0 : 2) : "n/a");
+const pct = (v, d = 1) => (ok(v) ? (v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(d) + "%" : "n/a");
+const signed = (v, d = 1) => (ok(v) ? (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(d) + "%" : "n/a");
+
+function ticks(lo, hi, n = 4) {
+  if (hi === lo) hi = lo + 1;
+  const raw = (hi - lo) / n, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+  const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  const a = Math.floor(lo / step) * step, out = [];
+  for (let v = a; v < hi + step * 0.999; v += step) out.push(Math.abs(v) < step / 1e6 ? 0 : v);
+  return out;
+}
+
+/* ---------- KPI explorer ---------- */
+const state = { metric: "revenue", mode: "A", range: "10", view: "chart" };
+try { Object.assign(state, JSON.parse(localStorage.getItem("iq_view") || "{}")); } catch {}
+const remember = () => { try { localStorage.setItem("iq_view", JSON.stringify(state)); } catch {} };
+
+function buildList() {
+  const wrap = $("kpi-groups"), q = $("kpi-search").value.trim().toLowerCase();
+  wrap.replaceChildren();
+  let any = false;
+  [...new Set(METRICS.map((m) => m.group))].forEach((grp) => {
+    const items = METRICS.filter((m) => m.group === grp && (!q || m.name.toLowerCase().includes(q) || grp.toLowerCase().includes(q)));
+    if (!items.length) return;
+    any = true;
+    const box = H("div", "kpi-group"); box.append(H("h3", "", grp));
+    items.forEach((m) => {
+      const b = H("button", "", m.name); b.type = "button"; b.setAttribute("aria-pressed", String(m.key === state.metric));
+      b.addEventListener("click", () => { state.metric = m.key; remember(); buildList(); drawKpi(); });
+      box.append(b);
+    });
+    wrap.append(box);
+  });
+  if (!any) wrap.append(H("p", "muted", "No KPI matches that search."));
+}
+$("kpi-search").addEventListener("input", buildList);
+
+function viewMode() {
+  let mode = state.mode;
+  if (D.noQ) mode = "A";
+  else if (!A.label.length && mode === "A") mode = "Q";
+  if (mode === "T" && !D.hasT) mode = "Q";
+  return mode;
+}
+function series(m, modeId) {
+  let ds = modeId === "A" ? A : modeId === "Q" ? Q : T, note = "";
+  if (m.ttm && modeId === "Q" && D.hasT) { ds = T; note = "Shown on a trailing-12-month basis, since a single period distorts this ratio."; }
+  let labels = ds.label.slice(), vals = labels.map((_, i) => m.fn(ds, i));
+  if (modeId === "T") labels = labels.map((l) => "12m to " + l);
+  const first = vals.findIndex(ok);
+  return { ds, mode: modeId, labels: labels.slice(first < 0 ? 0 : first), vals: vals.slice(first < 0 ? 0 : first), note };
+}
+function cagr(vals, periods, per) {
+  const b = vals[vals.length - 1], a = vals[vals.length - 1 - periods * per];
+  return ok(a) && ok(b) && a > 0 && b > 0 ? Math.pow(b / a, 1 / periods) - 1 : null;
+}
+function mean(vals, n) { const w = vals.slice(-n).filter(ok); return w.length ? w.reduce((a, b) => a + b, 0) / w.length : null; }
+
+function setSeg(id, val) { $(id).querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === val))); }
+[["seg-mode", "mode"], ["seg-range", "range"], ["seg-view", "view"]].forEach(([id, key]) => {
+  $(id).querySelectorAll("button").forEach((b) => { b.type = "button"; b.addEventListener("click", () => { state[key] = b.dataset.v; remember(); drawKpi(); }); });
+});
+
+function drawKpi() {
+  const m = METRICS.find((x) => x.key === state.metric) || METRICS[0], full = series(m, viewMode()), per = full.ds.per;
+  setSeg("seg-mode", full.mode); setSeg("seg-range", state.range); setSeg("seg-view", state.view);
+  const keep = Math.min(full.vals.length, +state.range * per + (state.range === "99" ? 9999 : 0));
+  const labels = full.labels.slice(-keep), vals = full.vals.slice(-keep);
+  $("k-title").textContent = m.name;
+  $("k-desc").textContent = m.desc + (full.note ? " " + full.note : "");
+  const stats = $("k-stats"); stats.replaceChildren();
+  const add = (l, v) => { const d = H("div", "stat"); d.append(H("span", "", l), H("b", "", v)); stats.append(d); };
+  const last = full.vals[full.vals.length - 1], prev = full.vals[full.vals.length - 1 - full.ds.lag];
+  add("Latest · " + full.labels[full.labels.length - 1], fmt(last, m.unit));
+  const level = m.unit === "usd" || m.unit === "eps" || m.unit === "sh";
+  if (level) {
+    add("vs a year earlier", ok(last) && ok(prev) && prev > 0 ? signed(last / prev - 1) : "n/a");
+    const yrs = Math.floor((full.vals.length - 1) / per), n1 = Math.min(5, yrs), n2 = Math.min(10, yrs);   // as far back as the filings go
+    if (n1 >= 2) add(`${n1}-yr growth a year`, signed(cagr(full.vals, n1, per)));
+    if (n2 > n1) add(`${n2}-yr growth a year`, signed(cagr(full.vals, n2, per)));
+  } else {
+    const yrs = Math.floor(full.vals.length / per), n1 = Math.min(5, yrs), n2 = Math.min(10, yrs);
+    add("A year earlier", fmt(prev, m.unit));
+    if (n1 >= 2) add(`${n1}-yr average`, fmt(mean(full.vals, n1 * per), m.unit));
+    if (n2 > n1) add(`${n2}-yr average`, fmt(mean(full.vals, n2 * per), m.unit));
+  }
+  if (full.vals.length <= per) add("History", full.vals.length + (per === 1 ? " year" : per === 2 ? " half-year" : " quarter") + (full.vals.length === 1 ? "" : "s") + " on file");
+  $("k-src").textContent = `Source: ${D.source}. Latest period ends ${fmtDate(D.latestPeriodEnd)}. ${D.standard === "IFRS" ? "IFRS" : "GAAP"} figures${D._conv && D._conv.from !== "USD" ? ", converted from " + D._conv.from + " to US dollars" : D.currency !== "USD" ? " in " + D.currency : ""}.`;
+  const isTable = state.view === "table";
+  $("k-plot").hidden = isTable; $("k-table").hidden = !isTable;
+  if (isTable) {
+    const t = H("table"), tb = H("tbody");
+    t.innerHTML = "<thead><tr><th>Period</th><th></th><th>vs year earlier</th></tr></thead>";
+    t.querySelector("th:nth-child(2)").textContent = m.name;
+    for (let i = labels.length - 1; i >= 0; i--) {
+      const tr = H("tr"), p = vals[i - full.ds.lag];
+      tr.append(H("td", "", labels[i]), H("td", "num", fmt(vals[i], m.unit)), H("td", "num", level && ok(vals[i]) && ok(p) && p > 0 ? signed(vals[i] / p - 1) : "—"));
+      tb.append(tr);
+    }
+    t.append(tb); $("k-table").replaceChildren(t);
+  } else barChart($("k-svg"), $("k-tip"), labels, vals, m);
+}
+
+function barChart(svg, tip, labels, vals, m) {
+  svg.replaceChildren();
+  const W = Math.max(280, svg.parentElement.clientWidth), Ht = 290, L = 54, R = 8, Tp = 22, B = 30;
+  svg.setAttribute("viewBox", `0 0 ${W} ${Ht}`); svg.setAttribute("height", Ht);
+  svg.setAttribute("aria-label", `${m.name}, ${labels[0]} to ${labels[labels.length - 1]}`);
+  const good = vals.filter(ok), tk = ticks(Math.min(0, ...good), Math.max(0, ...good));
+  const lo = tk[0], hi = tk[tk.length - 1], Y = (v) => Tp + (1 - (v - lo) / (hi - lo)) * (Ht - Tp - B);
+  tk.forEach((v) => {
+    svg.append(S("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: tok("--line"), "stroke-width": v === 0 ? 1.5 : 1 }));
+    svg.append(S("text", { x: L - 7, y: Y(v) + 4, "text-anchor": "end", fill: tok("--muted") }, fmt(v, m.unit, true).replace(" days", "d")));
+  });
+  const n = vals.length, slot = (W - L - R) / n, bw = Math.max(2, Math.min(46, slot - (slot > 9 ? 2 : 1)));
+  const every = Math.ceil(n / Math.max(2, Math.floor((W - L - R) / 62)));
+  const bars = [];
+  vals.forEach((v, i) => {
+    const cx = L + i * slot + slot / 2;
+    if ((n - 1 - i) % every === 0) svg.append(S("text", { x: cx, y: Ht - 9, "text-anchor": "middle", fill: tok("--muted") }, labels[i].replace("12m to ", "")));
+    if (!ok(v)) { bars.push(null); return; }
+    const y0 = Y(0), y1 = Y(v), h = Math.max(1, Math.abs(y1 - y0)), r = Math.min(4, bw / 2, h);
+    const top = Math.min(y0, y1), up = v >= 0;
+    const d = up
+      ? `M${cx - bw / 2},${top + h}V${top + r}q0,${-r} ${r},${-r}h${bw - 2 * r}q${r},0 ${r},${r}V${top + h}Z`
+      : `M${cx - bw / 2},${top}V${top + h - r}q0,${r} ${r},${r}h${bw - 2 * r}q${r},0 ${r},${-r}V${top}Z`;
+    const p = S("path", { d, fill: tok("--accent") }); svg.append(p); bars.push(p);
+  });
+  const li = n - 1;
+  if (ok(vals[li])) svg.append(S("text", { x: Math.min(W - R - 2, L + li * slot + slot / 2), y: vals[li] >= 0 ? Y(vals[li]) - 6 : Y(vals[li]) + 14, "text-anchor": li * slot + slot / 2 > W - L - 40 ? "end" : "middle", fill: tok("--ink"), "font-weight": 500 }, fmt(vals[li], m.unit)));
+  const hit = S("rect", { x: L, y: 0, width: W - L - R, height: Ht, fill: "transparent" }); svg.append(hit);
+  const move = (e) => {
+    const box = svg.getBoundingClientRect(), x = (e.clientX - box.left) * (W / box.width);
+    const i = Math.max(0, Math.min(n - 1, Math.floor((x - L) / slot)));
+    bars.forEach((b, j) => b && b.setAttribute("opacity", j === i ? 1 : 0.4));
+    if (!ok(vals[i])) { tip.hidden = true; return; }
+    tip.replaceChildren(document.createTextNode(labels[i]), H("b", "", fmt(vals[i], m.unit)));
+    tip.hidden = false;
+    const cx = (L + i * slot + slot / 2) * (box.width / W), half = tip.offsetWidth / 2;
+    tip.style.left = Math.max(half, Math.min(box.width - half, cx)) + "px";
+    tip.style.top = Math.max(tip.offsetHeight + 2, Math.min(Y(Math.max(vals[i], 0)), Y(0)) * (box.height / Ht) - 8) + "px";
+  };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; bars.forEach((b) => b && b.setAttribute("opacity", 1)); });
+}
+function fmtDate(iso) { return new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); }
+
+/* ---------- Valuation ---------- */
+const half = (v) => Math.round(v * 2) / 2, clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const avgOk = (...v) => { const w = v.filter(ok); return w.length ? w.reduce((x, y) => x + y, 0) / w.length : 0; };
+/* Starting assumptions for any company, from its own record. A neutral opening position, not a view. */
+const colA = (f) => { const v = A.label.map((_, i) => f(A, i)), s0 = v.findIndex(ok); return s0 < 0 ? [] : v.slice(s0); };
+const growthRec = (f) => { const v = colA(f), n = Math.min(5, v.length - 1); return n >= 1 ? [cagr(v, n, 1), n] : [null, 0]; };
+const avgRec = (f) => { const v = colA(f), n = Math.min(5, v.length); return n ? [mean(v, n), n] : [null, 0]; };
+const yrsText = (n) => (n ? `${n} fiscal year${n === 1 ? "" : "s"}` : "");
+function starter() {
+  const gb = clamp(avgOk(growthRec(raw("revenue"))[0], yoy(raw("revenue"))(CO.ds, CO.i)), 0, 0.15) * 100;
+  const nm = avgOk(avgRec(ofRev(raw("netInc")))[0], CO.ni0 / CO.rev0) * 100, fm = CO.hasF ? avgOk(avgRec(ofRev(fcf))[0], CO.fcf0 / CO.rev0) * 100 : nm;
+  const bb = clamp(-(growthRec(raw("sharesDil"))[0] ?? 0), 0, 0.05) * 100, pe = clamp(10 + gb, 10, 25);
+  const mk = (gg, dm, b2, p) => ({ g: half(gg), m: half(clamp(nm + dm, 1, 60)), f: half(clamp(fm + dm, 1, 60)), b: half(b2), pe: half(p) });
+  return { bear: mk(gb * 0.5, -3, bb * 0.5, pe * 0.75), base: mk(gb, 0, bb, pe), bull: mk(Math.min(20, gb * 1.35 + 1), 2, bb + 0.5, pe * 1.3), r: 11, tg: 2, mos: 50, method: "avg" };
+}
+let FX = { asOf: null, usdPer: {} };   // US dollars per one unit of each currency
+/* Foreign filers: restate everything in US dollars per US-listed share.
+   The number of ordinary shares behind one US share is read off market value / price, snapped to a usual ADR ratio. */
+const ADR_RATIOS = [0.05, 0.1, 0.125, 0.2, 0.25, 1 / 3, 0.5, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 50, 100];
+const RATIO_FIX = { ONON: 1, RIO: 1 };   // multi-class or dual-listed companies where market value misleads
+let ratios = {};
+try { ratios = JSON.parse(localStorage.getItem("iq_ratio") || "{}") || {}; } catch {}
+function convert(d) {
+  if (d._raw === undefined) d._raw = d.currency !== "USD" || d.standard === "IFRS" ? JSON.stringify([d.annual.series, d.quarterly.series, d.currency]) : null;
+  if (!d._raw) return;
+  const [a, q, cur] = JSON.parse(d._raw), fx = cur === "USD" ? 1 : FX.usdPer[cur];
+  d._conv = null; d.annual.series = a; d.quarterly.series = q; d.currency = cur;
+  if (!fx) return;
+  const lastIn = (arr) => { for (let i = (arr || []).length - 1; i >= 0; i--) if (arr[i] > 0) return arr[i]; return null; };
+  const sh = lastIn(q.sharesDil) ?? lastIn(a.sharesDil) ?? lastIn(a.sharesOut) ?? lastIn(q.sharesOut), qt = PX.p[d.ticker];
+  const raw = qt && qt[0] > 0 && qt[2] > 0 && sh ? sh / (qt[2] / qt[0]) : 1;
+  const snap = ADR_RATIOS.reduce((best, r) => (Math.abs(Math.log(raw / r)) < Math.abs(Math.log(raw / best)) ? r : best), 1);
+  const user = ratios[d.ticker] ?? RATIO_FIX[d.ticker];
+  const k = user > 0 ? user : Math.abs(Math.log(raw / snap)) < 0.09 ? snap : raw;
+  if (fx === 1 && k === 1) return;
+  for (const block of [a, q]) for (const key in block) {
+    const f = key === "sharesDil" || key === "sharesOut" ? 1 / k : key === "epsDil" ? fx * k : fx;
+    block[key] = block[key].map((v) => (v == null ? null : v * f));
+  }
+  d.currency = "USD"; d._conv = { from: cur, fx, k, auto: !(ratios[d.ticker] > 0) };
+}
+let PX = { asOf: null, p: {} };   // last-sale snapshot: ticker -> [price, day change %, market value, sector, industry]
+function placeholder(t) {
+  const d = DATA[t]; if (!d) return NaN;
+  const q = (d.quarterly.series.epsDil || []).slice(-4), an = (d.annual.series.epsDil || []).filter(ok);
+  const eps = q.length === 4 && q.every(ok) ? q.reduce((x, y) => x + y, 0) : an.length ? an[an.length - 1] : 0;
+  return eps > 0.25 ? Math.round(eps * 20) : 10;
+}
+const lastPrice = (t) => (PX.p[t] && PX.p[t][0] > 0 ? PX.p[t][0] : null);
+const pxDate = () => (PX.asOf ? fmtDate(PX.asOf.slice(0, 10)) : "");
+const priceNote = (t, v) => (lastPrice(t) ? (Math.abs(v - lastPrice(t)) < 0.005 ? `last price, ${pxDate()}` : "your test price") : Math.abs(v - placeholder(t)) < 0.005 ? "no quote found: placeholder" : "your test price");
+const models = {}, prices = {};
+const CASES = ["bear", "base", "bull"], CASE_NAME = { bear: "Bear", base: "Base", bull: "Bull" };
+let model, price;
+const recText = (rec, now, growth) => { const [v, n] = rec, parts = []; if (n && ok(v)) parts.push(`${pct(v)} ${growth ? "a year over" : "average over"} ${yrsText(n)}`); if (ok(now)) parts.push(`${pct(now)} ${CO.basis}`); return parts.join(" · ") || "No record yet"; };
+const ROWS = [
+  ["g", "Revenue growth", "a year, for 5 years", "%", 0.5, () => recText(growthRec(raw("revenue")), yoy(raw("revenue"))(CO.ds, CO.i), true)],
+  ["m", "Net margin", "in year 5", "%", 0.5, () => recText(avgRec(ofRev(raw("netInc"))), CO.ni0 / CO.rev0)],
+  ["f", "Free cash flow margin", "each year", "%", 0.5, () => (CO.hasF ? recText(avgRec(ofRev(fcf)), CO.fcf0 / CO.rev0) : "No cash-flow record on file, so this starts at the net margin")],
+  ["b", "Share count shrinks", "a year, from buybacks", "%", 0.5, () => { const [v, n] = growthRec(raw("sharesDil")); return n && ok(v) ? `${pct(-v)} a year over ${yrsText(n)}` : "No record yet"; }],
+  ["pe", "Exit P/E", "multiple in year 5", "×", 0.5, () => (CO.eps0 > 0 ? `${(price / CO.eps0).toFixed(1)}× today on ${usd(CO.eps0)} of EPS` : `No earnings in the ${CO.basis}`)],
+];
+function buildAssumptions() {
+  const tb = $("assume-body"); tb.replaceChildren();
+  ROWS.forEach(([k, name, sub2, unit, step]) => {
+    const tr = H("tr"), td = H("td"); td.append(document.createTextNode(name), H("small", "", sub2)); tr.append(td);
+    CASES.forEach((c) => {
+      const cell = H("td"), box = H("span", "cell"), inp = H("input");
+      inp.type = "number"; inp.step = step; inp.id = `in-${c}-${k}`; inp.value = model[c][k]; inp.setAttribute("aria-label", `${CASE_NAME[c]} case: ${name}`);
+      inp.addEventListener("input", () => { const v = parseFloat(inp.value); if (isFinite(v)) { model[c][k] = v; renderVal(); } });
+      box.append(inp, H("span", "", unit)); cell.append(box); tr.append(cell);
+    });
+    const h = H("td", "hist-c"); h.id = "hist-" + k; tr.append(h); tb.append(tr);
+  });
+  ["r", "tg", "mos"].forEach((k) => { $("in-" + k).value = model[k]; });
+  $("in-method").value = model.method;
+}
+["r", "tg", "mos"].forEach((k) => $("in-" + k).addEventListener("input", (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) { model[k] = v; renderVal(); } }));
+$("in-method").addEventListener("change", (e) => { model.method = e.target.value; renderVal(); });
+$("reset").addEventListener("click", () => { model = models[D.ticker] = starter(); buildAssumptions(); renderVal(); });
+
+function valueCase(s, mdl, px) {
+  const r = mdl.r / 100, tg = Math.min(mdl.tg / 100, r - 0.005), n = CO.years, m0 = CO.ni0 / CO.rev0;
+  let rev = CO.rev0, sh = CO.shares0, pv = 0; const path = [];
+  for (let t = 1; t <= n; t++) {
+    rev *= 1 + s.g / 100; sh *= 1 - s.b / 100; pv += (rev * s.f / 100) / Math.pow(1 + r, t);
+    path.push((rev * (m0 + (s.m / 100 - m0) * (t / n))) / sh);
+  }
+  const disc = Math.pow(1 + r, n), eps5 = path[n - 1], exit = eps5 * s.pe;
+  const eps = exit / disc;
+  const dcf = (pv + ((rev * s.f / 100) * (1 + tg)) / (r - tg) / disc + CO.netCash) / CO.shares0;
+  const iv = mdl.method === "eps" ? eps : mdl.method === "dcf" ? dcf : (eps + dcf) / 2;
+  return { eps, dcf, iv, eps5, path, ret: exit > 0 && px > 0 ? Math.pow(exit / px, 1 / n) - 1 : null };
+}
+const valueAll = (mdl, px) => Object.fromEntries(CASES.map((c) => [c, valueCase(mdl[c], mdl, px)]));
+function trigger(rule, vals, mdl, custom) {
+  if (rule === "bear") return vals.bear.iv;
+  if (rule === "base") return vals.base.iv;
+  if (rule === "custom") return custom;
+  return vals.base.iv * (1 - mdl.mos / 100);
+}
+const RULE_TEXT = { mos: (m) => `base value less ${m.mos}% margin of safety`, base: () => "base value", bear: () => "bear value", custom: () => "your set price" };
+function status(px, trig) { return px <= trig ? ["go", "Buy zone"] : px <= trig * 1.1 ? ["near", "Within 10%"] : ["wait", "Watching"]; }
+
+function spread(items, gap, lo, hi) {
+  items.sort((a, b) => a.x - b.x);
+  for (let i = 0; i < items.length; i++) items[i].lx = Math.max(i ? items[i - 1].lx + gap : lo, Math.min(items[i].x, hi - gap * (items.length - 1 - i)));
+  for (let i = items.length - 2; i >= 0; i--) items[i].lx = Math.min(items[i].lx, items[i + 1].lx - gap);
+}
+function drawRange(svg, vals, px, trig) {
+  svg.replaceChildren();
+  const W = Math.max(260, svg.parentElement.clientWidth), Ht = 96, P = 30;
+  svg.setAttribute("viewBox", `0 0 ${W} ${Ht}`); svg.setAttribute("height", Ht);
+  const all = [vals.bear.iv, vals.base.iv, vals.bull.iv, px, trig].filter(ok);
+  const mn = Math.min(...all), mx = Math.max(...all), pad = Math.max(1, mx - mn) * 0.07, lo = mn - pad, hi = mx + pad, X = (v) => P + ((v - lo) / (hi - lo)) * (W - 2 * P);
+  svg.append(S("rect", { x: P, y: 42, width: W - 2 * P, height: 8, rx: 4, fill: tok("--sunken") }));
+  svg.append(S("rect", { x: P, y: 42, width: Math.max(0, X(trig) - P), height: 8, rx: 4, fill: tok("--bull-soft") }));
+  const a = Math.min(X(vals.bear.iv), X(vals.bull.iv)), b = Math.max(X(vals.bear.iv), X(vals.bull.iv));
+  svg.append(S("rect", { x: a, y: 42, width: Math.max(2, b - a), height: 8, rx: 4, fill: tok("--accent-soft") }));
+  const top = CASES.map((c) => ({ x: X(vals[c].iv), t: `${CASE_NAME[c]} ${CUR}${vals[c].iv.toFixed(0)}`, c: "--" + c }));
+  spread(top, 78, 40, W - 40);
+  top.forEach((o) => {
+    svg.append(S("circle", { cx: o.x, cy: 46, r: 6, fill: tok(o.c), stroke: tok("--surface"), "stroke-width": 2 }));
+    svg.append(S("line", { x1: o.x, x2: o.lx, y1: 38, y2: 24, stroke: tok(o.c), "stroke-width": 1 }));
+    svg.append(S("text", { x: o.lx, y: 18, "text-anchor": "middle", fill: tok("--ink") }, o.t));
+  });
+  const bot = [{ x: X(px), t: `Price ${CUR}${px.toFixed(0)}`, c: "--ink", dash: "" }, { x: X(trig), t: `Alert ${CUR}${trig.toFixed(0)}`, c: "--bull", dash: "3 2" }];
+  spread(bot, 84, 42, W - 42);
+  bot.forEach((o) => {
+    svg.append(S("line", { x1: o.x, x2: o.x, y1: 34, y2: 58, stroke: tok(o.c), "stroke-width": 2, "stroke-dasharray": o.dash }));
+    svg.append(S("line", { x1: o.x, x2: o.lx, y1: 58, y2: 72, stroke: tok(o.c), "stroke-width": 1 }));
+    svg.append(S("text", { x: o.lx, y: 86, "text-anchor": "middle", fill: tok("--ink") }, o.t));
+  });
+}
+
+function drawEps(vals) {
+  const svg = $("eps-svg"), tip = $("eps-tip"); svg.replaceChildren();
+  const W = Math.max(280, svg.parentElement.clientWidth), Ht = 230, L = 44, R = 58, Tp = 14, B = 28;
+  svg.setAttribute("viewBox", `0 0 ${W} ${Ht}`); svg.setAttribute("height", Ht);
+  const nh = Math.min(8, N(A)), hist = A.label.slice(-nh).map((l, i) => ({ l, v: g(A, "epsDil", N(A) - nh + i) ?? 0 })).concat(CO.ds === A || D.quarterly.q[li] === (D.quarterly.per || 4) ? [] : [{ l: "Now", v: CO.eps0 }]);
+  const n = hist.length + CO.years, maxV = Math.max(0.5, ...hist.map((h) => h.v), ...CASES.flatMap((c) => vals[c].path));
+  const tk = ticks(0, maxV), hi = tk[tk.length - 1], Y = (v) => Tp + (1 - v / hi) * (Ht - Tp - B), slot = (W - L - R) / n, cx = (i) => L + i * slot + slot / 2;
+  tk.forEach((v) => { svg.append(S("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: tok("--line") })); svg.append(S("text", { x: L - 6, y: Y(v) + 4, "text-anchor": "end", fill: tok("--muted") }, CUR + v)); });
+  const bw = Math.min(30, slot - 2);
+  hist.forEach((h, i) => {
+    const y = Y(Math.max(0, h.v)), ht = Math.max(1, Y(0) - y), r = Math.min(4, ht);
+    svg.append(S("path", { d: `M${cx(i) - bw / 2},${y + ht}V${y + r}q0,${-r} ${r},${-r}h${bw - 2 * r}q${r},0 ${r},${r}V${y + ht}Z`, fill: tok("--accent") }));
+    if (i % 2 === 0 || i === hist.length - 1) svg.append(S("text", { x: cx(i), y: Ht - 8, "text-anchor": "middle", fill: tok("--muted") }, h.l));
+  });
+  for (let t = 1; t <= CO.years; t++) if (t === 3 || t === 5) svg.append(S("text", { x: cx(hist.length - 1 + t), y: Ht - 8, "text-anchor": "middle", fill: tok("--muted") }, "Yr " + t));
+  const ends = [];
+  CASES.forEach((c) => {
+    const pts = [[cx(hist.length - 1), Y(CO.eps0)]].concat(vals[c].path.map((v, t) => [cx(hist.length + t), Y(Math.max(0, v))]));
+    svg.append(S("path", { d: "M" + pts.map((p) => p.join(",")).join("L"), fill: "none", stroke: tok("--" + c), "stroke-width": 2, "stroke-linejoin": "round" }));
+    const e = pts[pts.length - 1]; svg.append(S("circle", { cx: e[0], cy: e[1], r: 4, fill: tok("--" + c), stroke: tok("--surface"), "stroke-width": 2 }));
+    ends.push({ x: e[1], t: usd(vals[c].eps5), px: e[0] });
+  });
+  spread(ends, 13, Tp + 4, Ht - B);
+  ends.forEach((o) => svg.append(S("text", { x: o.px + 8, y: o.lx + 4, fill: tok("--ink") }, o.t)));
+  const hit = S("rect", { x: L, y: 0, width: W - L - R, height: Ht, fill: "transparent" }); svg.append(hit);
+  const guide = S("line", { y1: Tp, y2: Ht - B, stroke: tok("--muted"), "stroke-dasharray": "2 3", visibility: "hidden" }); svg.append(guide);
+  const move = (e) => {
+    const box = svg.getBoundingClientRect(), x = (e.clientX - box.left) * (W / box.width), i = Math.max(0, Math.min(n - 1, Math.floor((x - L) / slot)));
+    tip.replaceChildren();
+    if (i < hist.length) tip.append(document.createTextNode(hist[i].l === "Now" ? "Latest 12 months" : hist[i].l), H("b", "", usd(hist[i].v)));
+    else { const t = i - hist.length; tip.append(document.createTextNode("Year " + (t + 1))); CASES.slice().reverse().forEach((c) => tip.append(H("b", "", `${CASE_NAME[c]} ${usd(vals[c].path[t])}`))); }
+    tip.hidden = false; guide.setAttribute("x1", cx(i)); guide.setAttribute("x2", cx(i)); guide.setAttribute("visibility", "visible");
+    const half = tip.offsetWidth / 2, sx = cx(i) * (box.width / W);
+    tip.style.left = Math.max(half, Math.min(box.width - half, sx)) + "px"; tip.style.top = tip.offsetHeight + 4 + "px";
+  };
+  hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; guide.setAttribute("visibility", "hidden"); });
+}
+
+let lastVals = null;
+function renderVal() {
+  if (!CO.ok) return;
+  const vals = (lastVals = valueAll(model, price));
+  const outs = $("outs"); outs.replaceChildren();
+  CASES.forEach((c) => {
+    const v = vals[c], box = H("div", "out " + c);
+    box.append(H("span", "out-h " + c, CASE_NAME[c] + " value"), H("b", "iv", usd(v.iv)));
+    const dl = H("dl");
+    [["vs price", signed(v.iv / price - 1, 0)], ["EPS method", usd(v.eps)], ["DCF", usd(v.dcf)], ["Year-5 EPS", usd(v.eps5)], ["Return a year if bought now", signed(v.ret, 1)]].forEach(([k, x]) => dl.append(H("dt", "", k), H("dd", "", x)));
+    box.append(dl); outs.append(box);
+  });
+  const rule = $("alert-rule").value, custom = parseFloat($("alert-custom").value);
+  $("alert-custom-wrap").hidden = rule !== "custom";
+  const trig = trigger(rule, vals, model, isFinite(custom) ? custom : Math.round(vals.base.iv * 0.7));
+  drawRange($("range-svg"), vals, price, trig);
+  const [cls, lab] = status(price, trig), gap = price / trig - 1;
+  $("verdict-text").textContent = price <= trig ? `At ${usd(price)} ${D.ticker} is ${pct(-gap, 0)} below your alert line of ${usd(trig)} (${RULE_TEXT[rule](model)}).` : `Alert line ${usd(trig)} (${RULE_TEXT[rule](model)}). The price has to fall ${pct(gap / (1 + gap), 0)} to reach it.`;
+  const pill = $("verdict-pill"); pill.className = "pill " + cls; pill.textContent = lab;
+  ROWS.forEach(([k, , , , , hint]) => { $("hist-" + k).textContent = hint(); });
+  drawEps(vals);
+}
+$("alert-rule").addEventListener("change", renderVal);
+$("alert-custom").addEventListener("input", renderVal);
+
+/* ---------- Watchlist: kept in your account where available, otherwise in this browser ---------- */
+const store = { items: {}, col: null, cloud: false };
+const priceOf = (t) => prices[t] ?? lastPrice(t) ?? (store.items[t] ? store.items[t].priceAtSave : placeholder(t));
+const LS = "iq_watchlist";
+function loadLocal() { try { store.items = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch { store.items = {}; } }
+function saveLocal() { try { localStorage.setItem(LS, JSON.stringify(store.items)); } catch {} }
+async function connectStore() {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    const id = user ? await user.id() : null;
+    if (!db || !id) return;
+    store.col = db.collection("data/users/" + id + "/watchlist/items");
+    const snap = await store.col.get();
+    store.cloud = true;
+    const remote = {}; snap.docs.forEach((d) => { const v = d.data(); if (v && v.ticker) remote[v.ticker] = v; });
+    for (const t in store.items) if (!remote[t] || (store.items[t].savedAt || "") > (remote[t].savedAt || "")) { remote[t] = store.items[t]; store.col.doc(t).set(remote[t]).catch(() => {}); }
+    store.items = remote; saveLocal(); if (D) renderWatch();
+  } catch { /* stays local */ }
+}
+async function persist(item) {
+  store.items[item.ticker] = item; saveLocal();
+  if (store.col) { try { await store.col.doc(item.ticker).set(item); } catch { store.cloud = false; } }
+}
+async function removeItem(t) {
+  delete store.items[t]; saveLocal();
+  if (store.col) { try { await store.col.doc(t).delete(); } catch {} }
+  renderWatch();
+}
+
+$("save").addEventListener("click", async () => {
+  if (!CO.ok) return;
+  const vals = valueAll(model, price), rule = $("alert-rule").value, custom = parseFloat($("alert-custom").value);
+  if (rule === "custom" && !isFinite(custom)) { $("save-note").className = "note"; $("save-note").textContent = "Enter an alert price first."; $("alert-custom").focus(); return; }
+  const prev = store.items[D.ticker];
+  const snap = (v) => ({ iv: +v.iv.toFixed(2), eps: +v.eps.toFixed(2), dcf: +v.dcf.toFixed(2) });
+  const item = {
+    ticker: D.ticker, name: D.name, savedAt: new Date().toISOString(), priceAtSave: price, filing: D.noQ ? A.label[N(A) - 1] : Q.label[li],
+    model: JSON.parse(JSON.stringify(model)), values: { bear: snap(vals.bear), base: snap(vals.base), bull: snap(vals.bull) },
+    rule, custom: rule === "custom" ? custom : null, alertPrice: +trigger(rule, vals, model, custom).toFixed(2), thesis: $("thesis").value.trim(),
+    history: (prev ? [{ savedAt: prev.savedAt, base: prev.values.base.iv, alertPrice: prev.alertPrice }].concat(prev.history || []) : []).slice(0, 12),
+  };
+  await persist(item);
+  $("save-note").className = "note ok"; $("save-note").textContent = `Saved. You'll be alerted at ${usd(item.alertPrice)}.`;
+  renderWatch();
+});
+
+function renderWatch() {
+  $("store-note").textContent = store.cloud ? "Saved to your account, so it is here on any device." : "Saved in this browser.";
+  const wl = $("wl"), items = Object.values(store.items).sort((a, b) => (a.ticker > b.ticker ? 1 : -1));
+  wl.replaceChildren();
+  if (!items.length) {
+    const e = H("div", "empty");
+    e.append(H("b", "", "Nothing saved yet"), H("span", "", "Set your three cases above and save. Each company appears here with its alert line and how far the price is from it."));
+    const a = H("a", "btn small", "Go to valuation"); a.href = "#valuation"; e.append(a); wl.append(e);
+  } else {
+    const box = H("div", "tbl"), t = H("table");
+    t.innerHTML = "<thead><tr><th>Company</th><th>Price</th><th>Bear</th><th>Base</th><th>Bull</th><th>Alert at</th><th>To alert</th><th>Status</th></tr></thead>";
+    const tb = H("tbody");
+    items.forEach((it) => {
+      const tr = H("tr"), c = H("td"); c.append(H("b", "", it.ticker), H("small", "", it.name)); tr.append(c);
+      const px = priceOf(it.ticker), gap = px / it.alertPrice - 1, [cls, lab] = status(px, it.alertPrice);
+      tr.setAttribute("aria-current", String(it.ticker === D.ticker)); tr.tabIndex = 0;
+      const open = () => { if (it.ticker !== D.ticker) openCompany(it.ticker); };
+      tr.addEventListener("click", open); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") open(); });
+      [usd(px), usd(it.values.bear.iv), usd(it.values.base.iv), usd(it.values.bull.iv), usd(it.alertPrice), px <= it.alertPrice ? "reached" : "−" + (gap / (1 + gap) * 100).toFixed(0) + "%"].forEach((x) => tr.append(H("td", "num", x)));
+      const s = H("td"); s.append(H("span", "pill " + cls, lab)); tr.append(s); tb.append(tr);
+    });
+    t.append(tb); box.append(t); wl.append(box);
+    const it = store.items[D.ticker], det = H("div", "wl-detail");
+    if (!it) { det.append(H("p", "muted", `${D.ticker} is not saved yet. Set its three cases above and save, or pick a row to open that company.`)); wl.append(det); renderMail(); return; }
+    const plot = H("div", "plot"), svg = S("svg", { role: "img", "aria-label": "Saved bear, base and bull values against the price" }); plot.append(svg); det.append(plot);
+    const days = Math.floor((Date.now() - new Date(it.savedAt)) / 864e5), moved = price / it.priceAtSave - 1;
+    det.append(H("p", "muted", `Saved ${days === 0 ? "today" : days + " day" + (days === 1 ? "" : "s") + " ago"} at ${usd(it.priceAtSave)}, on ${it.filing} results. Price since then: ${signed(moved)}. Base case assumed ${it.model.base.g}% growth, ${it.model.base.m}% net margin, ${it.model.base.pe}× exit P/E.` + (it.filing !== (D.noQ ? A.label[N(A) - 1] : Q.label[li]) ? ` New results (${D.noQ ? A.label[N(A) - 1] : Q.label[li]}) are out since you saved: recheck your thesis.` : "")));
+    if (it.thesis) det.append(H("div", "thesis", it.thesis));
+    if (it.history && it.history.length) det.append(H("p", "src", "Earlier saves: " + it.history.map((h) => `${fmtDate(h.savedAt.slice(0, 10))} base ${usd(h.base)}, alert ${usd(h.alertPrice)}`).join(" · ")));
+    const row = H("div"); row.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
+    const load = H("button", "btn ghost small", "Load into valuation"); load.type = "button";
+    load.addEventListener("click", () => { model = JSON.parse(JSON.stringify(it.model)); $("thesis").value = it.thesis || ""; $("alert-rule").value = it.rule; $("alert-custom").value = it.custom ?? ""; buildAssumptions(); renderVal(); location.hash = "valuation"; });
+    const del = H("button", "btn ghost small", "Remove"); del.type = "button";
+    del.addEventListener("click", () => { if (del.dataset.sure) removeItem(it.ticker); else { del.dataset.sure = "1"; del.textContent = "Tap again to remove"; } });
+    row.append(load, del); det.append(row); wl.append(det);
+    drawRange(svg, Object.fromEntries(CASES.map((c) => [c, it.values[c]])), price, it.alertPrice);
+  }
+  renderMail();
+}
+
+function renderMail() {
+  if (!CO.ok && !store.items[D.ticker]) { $("mail").replaceChildren(H("div", "mail-b", `${D.ticker} has no valuation to alert on.`)); return; }
+  const it = store.items[D.ticker], vals = lastVals || valueAll(model, price);
+  const alertPrice = it ? it.alertPrice : trigger($("alert-rule").value, vals, model, parseFloat($("alert-custom").value) || vals.base.iv * 0.7);
+  const baseIv = it ? it.values.base.iv : vals.base.iv, sim = $("sim");
+  sim.min = Math.floor(Math.min(alertPrice, price) * 0.6); sim.max = Math.ceil(Math.max(baseIv, price, alertPrice) * 1.15); sim.value = price;
+  $("sim-out").textContent = usd(price);
+  const fired = price <= alertPrice, mail = $("mail"); mail.replaceChildren();
+  const h = H("div", "mail-h");
+  h.append(H("span", "", fired ? "Would send now · to your account email" : `Preview · sends when ${D.ticker} trades at ${usd(alertPrice)} or less`), H("b", "", `${D.ticker} hit your buy zone at ${usd(fired ? price : alertPrice)}`));
+  const b = H("div", "mail-b"), shown = fired ? price : alertPrice;
+  b.append(H("p", "", `${D.name} is trading at ${usd(shown)}, ${pct(1 - shown / baseIv, 0)} below your base-case value of ${usd(baseIv)}.` + (it ? "" : " (Using the unsaved valuation above.)")));
+  const st = H("div", "mail-stats");
+  [["Price", usd(shown)], ["Your alert line", usd(alertPrice)], ["Discount to base", pct(1 - shown / baseIv, 0)]].forEach(([k, v]) => { const d = H("div"); d.append(H("span", "", k), H("b", "", v)); st.append(d); });
+  b.append(st);
+  if (it && it.thesis) b.append(H("p", "muted", "Your thesis: " + it.thesis));
+  b.append(H("p", "muted", "Check the latest results still support your assumptions before acting."));
+  mail.append(h, b);
+}
+
+/* ---------- Price ---------- */
+function setPrice(v, from) {
+  if (!isFinite(v) || v <= 0) return;
+  price = prices[D.ticker] = v;
+  if (from !== "input") $("price").value = v.toFixed(2);
+  $("price-note").textContent = priceNote(D.ticker, v); $("price-reset").hidden = !lastPrice(D.ticker) || Math.abs(v - lastPrice(D.ticker)) < 0.005;
+  renderVal(); renderWatch();
+}
+$("price").addEventListener("input", (e) => setPrice(parseFloat(e.target.value), "input"));
+$("price-reset").addEventListener("click", () => setPrice(lastPrice(D.ticker)));
+$("sim").addEventListener("input", (e) => setPrice(parseFloat(e.target.value)));
+
+/* ---------- Boot ---------- */
+const cleanName = (n) => n.replace(/\s*\/[A-Za-z ]{0,6}\/?\s*$/, "").replace(/\s+/g, " ").trim();
+function loadCompany(t) {
+  D = DATA[t]; D.name = cleanName(D.name); convert(D); buildSets(); li = N(T) - 1; lastVals = null;
+  CUR = SYMBOL[D.currency] || D.currency + " ";
+  const lastOf = (ds, f) => { for (let i = N(ds) - 1; i >= 0; i--) { const v = f(ds, i); if (ok(v)) return v; } return null; };
+  // Value from the latest twelve months where the quarters allow it, otherwise from the latest fiscal year.
+  const useT = D.hasT && ok(g(T, "revenue", li)) && ok(g(T, "netInc", li));
+  const ds = useT ? T : A, i = useT ? li : N(A) - 1, bs = useT ? Q : A;
+  const capShares = PX.p[t] && PX.p[t][0] > 0 && PX.p[t][2] > 0 && D.currency === "USD" ? Math.round(PX.p[t][2] / PX.p[t][0]) : null;
+  // Only a recent count will do: one from years back would misprice every per-share figure.
+  const recent = (x, k) => { for (let j = N(x) - 1; j >= Math.max(0, N(x) - 1 - x.per); j--) if (ok(g(x, k, j)) && g(x, k, j) > 0) return g(x, k, j); return null; };
+  const filedShares = recent(bs, "sharesDil") ?? recent(A, "sharesDil") ?? recent(bs, "sharesOut");
+  const shares0 = filedShares ?? capShares;
+  CO = { ds, i, basis: useT ? "latest 12 months" : "latest fiscal year", rev0: g(ds, "revenue", i), ni0: g(ds, "netInc", i), fcf0: fcf(ds, i) ?? 0, shares0, netCash: (liquid(bs, i) ?? 0) - (debt(bs, i) ?? 0), years: 5 };
+  CO.hasF = ok(fcf(ds, i));
+  CO.eps0 = g(ds, "epsDil", i) ?? (ok(CO.ni0) && shares0 ? CO.ni0 / shares0 : null);
+  CO.ok = N(ds) > 0 && CO.rev0 > 0 && ok(CO.ni0) && shares0 > 0;
+  CO.why = !N(ds) || !ok(CO.ni0) ? "a full year of results" : !(CO.rev0 > 0) ? "revenue" : "a share count";
+  METRICS = ALL_METRICS.filter((m) => [A, Q].some((x) => x.label.some((_, j) => ok(m.fn(x, j)))));
+  if (!METRICS.some((m) => m.key === state.metric)) state.metric = (METRICS.find((m) => m.key === "revenue") || METRICS[0] || {}).key;
+  const saved = store.items[t];
+  $("val-grid").hidden = !CO.ok; $("val-none").hidden = CO.ok;
+  if (CO.ok) model = models[t] = models[t] || (saved ? JSON.parse(JSON.stringify(saved.model)) : starter());
+  else { const box = $("val-none"); box.replaceChildren(H("b", "", `${D.name} can't be valued here yet`), H("span", "", `The three-case model needs ${CO.why}, and the filings don't give one. The KPIs above show everything that is on file.`)); }
+  price = prices[t] = priceOf(t);
+  $("cur-sym").textContent = "$"; $("alert-custom-l").textContent = `Alert price (${CUR.trim()})`;
+  const note = $("cur-note"); note.hidden = D.currency === "USD" && !D.sharesApprox;
+  note.replaceChildren();
+  D.sharesApprox = !!D.sharesApprox && lastOf(bs, raw("sharesDil")) === lastOf(bs, raw("sharesOut"));   // only when the diluted count itself is the stand-in
+  note.hidden = D.currency === "USD" && !D.sharesApprox && filedShares && !D._conv;
+  if (D._conv) {
+    const c = D._conv, kTxt = +c.k.toFixed(3), inp = H("input");
+    inp.type = "number"; inp.id = "adr-ratio"; inp.min = "0.001"; inp.step = "any"; inp.value = kTxt; inp.setAttribute("aria-label", "Ordinary shares per US-listed share");
+    inp.style.cssText = "width:74px;padding:3px 6px;border-radius:7px;border:1px solid var(--line);background:var(--bg);font:500 13px var(--f-mono);margin:0 4px";
+    inp.addEventListener("change", () => { const v = parseFloat(inp.value); if (v > 0) { ratios[t] = v; try { localStorage.setItem("iq_ratio", JSON.stringify(ratios)); } catch {} loadCompany(t); } });
+    if (c.from !== "USD") note.append(H("b", "", `${D.name} reports in ${c.from}. `), document.createTextNode(`Everything here is converted to US dollars at one rate (${c.from} 1 = $${c.fx >= 0.01 ? c.fx.toFixed(4) : c.fx.toPrecision(3)}, ${FX.asOf ? fmtDate(new Date(FX.asOf).toISOString().slice(0, 10)) : "latest"}), so growth rates match the company's own. `));
+    note.append(H("b", "", "Per-share figures are per US-listed share. "), document.createTextNode("One US share stands for"), inp, document.createTextNode(`ordinary share${c.k === 1 ? "" : "s"}` + (c.auto ? ", worked out from market value. Correct it if you know the exact ratio." : ", as you set it.")), document.createTextNode(" "));
+  }
+  if (!filedShares && capShares) note.append(H("b", "", "Share count is estimated. "), document.createTextNode("The filings give no share count, so this uses market value divided by the share price. "));
+  if (D.sharesApprox) note.append(H("b", "", "Per-share figures are approximate. "), document.createTextNode("The statements give no share count, so this uses the count on the filing's cover page, which can leave out other share classes. Check it before relying on a per-share value. "));
+  if (D.currency !== "USD") note.append(H("b", "", `${D.name} reports in ${D.currency}. `), document.createTextNode(`Values here are in ${D.currency} per ordinary share, while the share price is the US listing in dollars. Nothing is converted, so "vs price" and the alert line are only right once you allow for the exchange rate and, for ADRs, the number of ordinary shares each one stands for.`));
+  $("thesis").value = saved ? saved.thesis || "" : ""; $("alert-rule").value = saved ? saved.rule : "mos"; $("alert-custom").value = saved && saved.custom ? saved.custom : ""; $("save-note").textContent = "";
+  $("none-banner").hidden = true;
+  $("co-sq").textContent = t.slice(0, 2);
+  $("co-name").textContent = D.name;
+  const latest = D.noQ ? A.label[N(A) - 1] : Q.label[li];
+  $("co-sub").textContent = `${D.ticker} · ${D.exchange || "US"} · filings through ${latest} (${fmtDate(D.latestPeriodEnd)})`;
+  $("rec-h").textContent = `${D.ticker}'s record`;
+  const yrs = N(A), qs = D.noQ ? 0 : N(Q);
+  $("kpi-lede").textContent = `${METRICS.length} KPIs built from ${D.name}'s SEC filings: ` + [yrs ? `${yrs} fiscal year${yrs === 1 ? "" : "s"}` : "", qs ? `${qs} ${D.quarterly.per === 2 ? "half-years" : "quarters"}` : ""].filter(Boolean).join(" and ") + "." + (D.noQ ? " This company files annual figures only." : D.quarterly.per === 2 ? " This company files half-yearly, not quarterly." : !yrs ? " No full fiscal year is on file yet." : yrs < 5 ? " Growth and averages use the years available." : "");
+  const mb = $("seg-mode").querySelectorAll("button");
+  mb[0].disabled = !yrs; mb[1].disabled = D.noQ; mb[2].disabled = !D.hasT; mb[1].textContent = D.quarterly.per === 2 ? "Half-yearly" : "Quarterly";
+  $("price").value = price.toFixed(2); $("price-note").textContent = priceNote(t, price); $("price-reset").hidden = !lastPrice(t) || Math.abs(price - lastPrice(t)) < 0.005;
+  const qt = PX.p[t], quote = $("quote"); quote.hidden = !lastPrice(t);
+  if (lastPrice(t)) {
+    $("q-price").textContent = "$" + qt[0].toFixed(2);
+    const ch = $("q-chg"); ch.textContent = ok(qt[1]) ? (qt[1] >= 0 ? "▲ +" : "▼ −") + Math.abs(qt[1]).toFixed(2) + "%" : ""; ch.className = "num " + (qt[1] >= 0 ? "up" : "down");
+    const cap = qt[2] > 0 ? "Mkt cap $" + (qt[2] >= 1e12 ? (qt[2] / 1e12).toFixed(2) + "T" : qt[2] >= 1e9 ? (qt[2] / 1e9).toFixed(1) + "B" : (qt[2] / 1e6).toFixed(0) + "M") : "";
+    $("q-sub").textContent = [`Last price ${pxDate()}`, cap, qt[4] || qt[3]].filter(Boolean).join(" · ");
+  }
+  state.ticker = t; remember();
+  buildList();
+  if (METRICS.length) drawKpi();
+  if (CO.ok) { buildAssumptions(); renderVal(); }
+  renderWatch();
+}
+async function ensure(t) {
+  if (DATA[t]) return true;
+  const row = INDEX.find((r) => r[0] === t);
+  if (!row) return false;
+  const id = String(row[2]).padStart(3, "0");
+  try { Object.assign(DATA, await (shards[id] = shards[id] || fetch(`data/s/${id}.json`).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }))); } catch { delete shards[id]; return false; }
+  return !!DATA[t];
+}
+async function openCompany(t) {
+  const row = INDEX.find((r) => r[0] === t);
+  if (row && row[2] < 0) {
+    const box = $("none-banner"); box.hidden = false;
+    box.replaceChildren(H("b", "", `${row[1]} (${row[0]}, ${row[3]}) is listed, but there is nothing to chart. `), document.createTextNode("It files no financial statements in structured form with the SEC, which is typical of closed-end funds and some foreign issuers."));
+    box.scrollIntoView({ block: "center" }); return;
+  }
+  $("co-sub").textContent = `Loading ${t}…`;
+  if (await ensure(t)) loadCompany(t);
+  else $("co-sub").textContent = `Couldn't load ${t}. Check your connection and try again.`;
+}
+/* Company search over the index (largest companies first). */
+const find = $("find"), findList = $("find-list");
+let findHits = [], findOn = 0;
+function runFind() {
+  const q = find.value.trim().toUpperCase();
+  if (!q) { findHits = INDEX.slice(0, 8); } else {
+    const rank = (r) => (r[0] === q ? 0 : r[0].startsWith(q) ? 1 : (r[4] || []).some((a) => a.startsWith(q)) ? 2 : r[1].toUpperCase().startsWith(q) ? 3 : r[1].toUpperCase().includes(q) ? 4 : 9);
+    findHits = INDEX.map((r, i) => [rank(r), i, r]).filter((x) => x[0] < 9).sort((a, b) => a[0] - b[0] || a[1] - b[1]).slice(0, 8).map((x) => x[2]);
+  }
+  findOn = 0; findList.replaceChildren();
+  if (!findHits.length) findList.append(H("p", "", INDEX.length ? "No company matches. Foreign filers and funds are not covered yet." : "Company list not loaded."));
+  findHits.forEach((r, i) => {
+    const b = H("button", i === 0 ? "on" : ""); b.type = "button"; b.setAttribute("role", "option");
+    b.append(H("b", "", r[0]), H("span", "", r[1]), H("small", "", r[2] < 0 ? "no financials" : r[3]));
+    b.addEventListener("pointerdown", (e) => { e.preventDefault(); pick(r[0]); });
+    findList.append(b);
+  });
+  findList.hidden = false;
+}
+function pick(t) { findList.hidden = true; find.value = ""; find.blur(); openCompany(t); }
+find.addEventListener("input", runFind); find.addEventListener("focus", runFind);
+find.addEventListener("blur", () => setTimeout(() => { findList.hidden = true; }, 120));
+find.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && findHits[findOn]) { e.preventDefault(); pick(findHits[findOn][0]); }
+  else if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); findOn = (findOn + (e.key === "ArrowDown" ? 1 : findHits.length - 1)) % Math.max(1, findHits.length); [...findList.children].forEach((c, i) => c.classList.toggle("on", i === findOn)); }
+  else if (e.key === "Escape") find.blur();
+});
+(async function boot() {
+  loadLocal();
+  $("co-name").textContent = "Loading companies…";
+  try { const r = await fetch("data/index.json"); if (!r.ok) throw new Error(r.status); const j = await r.json(); INDEX = j.companies; INDEX.forEach((row) => { row[1] = cleanName(row[1]); }); $("foot").textContent = `IntrinsiQAI tester covering ${INDEX.length.toLocaleString()} NYSE and Nasdaq listings (${INDEX.filter((r) => r[2] >= 0).length.toLocaleString()} with financials), built ${fmtDate(j.built)}. Financials: SEC EDGAR XBRL company facts (10-K and 10-Q filings). Share prices are typed values, not live quotes. Research tool, not investment advice. Company names are trademarks of their owners; IntrinsiQAI is not affiliated with them.`; }
+  catch { $("co-name").textContent = "Couldn't load the company list"; $("co-sub").textContent = "Reload the page to try again."; return; }
+  try { const r = await fetch("data/prices.json"); if (r.ok) PX = await r.json(); } catch { /* the page works without quotes */ }
+  try { const r = await fetch("data/fx.json"); if (r.ok) FX = await r.json(); } catch { /* foreign filers stay in their own currency */ }
+  if (PX.asOf) $("foot").textContent = $("foot").textContent.replace("Share prices are typed values, not live quotes.", `Share prices are last-sale quotes captured ${pxDate()}, not a live feed.`);
+  find.placeholder = `Search ${INDEX.length.toLocaleString()} companies`;
+  const want = [state.ticker, "ADBE", INDEX[0] && INDEX[0][0]].find((t) => t && INDEX.some((r) => r[0] === t && r[2] >= 0));
+  await openCompany(want); connectStore();
+})();
+const redraw = () => { if (D) { if (METRICS.length) drawKpi(); renderVal(); renderWatch(); } };
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(redraw, 120); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
