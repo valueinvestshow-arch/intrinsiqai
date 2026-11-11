@@ -5,7 +5,7 @@ Value a stock under bear, base and bull cases, keep every valuation next to the 
 ```
 site/                          the pre-launch website, ready for Cloudflare Pages
   index.html                   landing page (built from src/landing.src.html)
-  privacy.html                 privacy policy: fill in the highlighted [brackets] before launch
+  privacy.html                 privacy policy
   admin.html, schema.sql       waitlist dashboard and database table
   fonts/                       self-hosted Geologica and IBM Plex Mono
 src/landing.src.html           landing page source; edit this, then run tools/build_landing.py
