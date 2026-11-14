@@ -338,7 +338,7 @@ footer .wrap { display: grid; gap: 8px; }
             <tbody>
               <tr><td>Revenue growth<small>Record: 13.1% a year</small></td><td class="num">6.5%</td><td class="num">12.5%</td><td class="num">18%</td></tr>
               <tr><td>Net margin<small>Record: 28.3% average</small></td><td class="num">25%</td><td class="num">28%</td><td class="num">30%</td></tr>
-              <tr><td>Exit P/E<small>Today: 13.3×</small></td><td class="num">17×</td><td class="num">22.5×</td><td class="num">29.5×</td></tr>
+              <tr><td>Exit P/E<small>Record: about 13× today</small></td><td class="num">17×</td><td class="num">22.5×</td><td class="num">29.5×</td></tr>
               <tr><td><b>Intrinsic value</b></td><td class="num"><b>$289</b></td><td class="num"><b>$481</b></td><td class="num"><b>$757</b></td></tr>
             </tbody>
           </table></div>
@@ -356,13 +356,13 @@ footer .wrap { display: grid; gap: 8px; }
           <div class="tbl"><table>
             <thead><tr><th>Company</th><th>Price</th><th>Base value</th><th>Alert at</th><th>Status</th></tr></thead>
             <tbody>
-              <tr><td><b>ADBE</b><small>Adobe</small></td><td class="num">$237.32</td><td class="num">$480.52</td><td class="num">$240.26</td><td><span class="pill go">Buy zone</span></td></tr>
-              <tr><td><b>ONON</b><small>On Holding</small></td><td class="num">$37.43</td><td class="num">$15.57</td><td class="num">$7.79</td><td><span class="pill wait">Watching</span></td></tr>
-              <tr><td><b>AAPL</b><small>Apple</small></td><td class="num">$350.69</td><td class="num">$173.54</td><td class="num">$86.77</td><td><span class="pill wait">Watching</span></td></tr>
+              <tr><td><b>ADBE</b><small>Adobe</small></td><td class="num">$238</td><td class="num">$480.52</td><td class="num">$240.26</td><td><span class="pill go">Buy zone</span></td></tr>
+              <tr><td><b>ONON</b><small>On Holding</small></td><td class="num">$37</td><td class="num">$15.57</td><td class="num">$7.79</td><td><span class="pill wait">Watching</span></td></tr>
+              <tr><td><b>AAPL</b><small>Apple</small></td><td class="num">$350</td><td class="num">$173.54</td><td class="num">$86.77</td><td><span class="pill wait">Watching</span></td></tr>
             </tbody>
           </table></div>
           <div class="mail"><div class="mail-h"><span>Email alert</span><b>ADBE hit your buy zone at $240.26</b></div><div class="mail-b">Adobe is trading 50% below your base-case value of $480.52. Check the latest results still support your thesis before acting.</div></div>
-          <p class="fine">Examples from the prototype's mechanical starting assumptions and prices of 10 Nov 2026. Not recommendations.</p>
+          <p class="fine">Examples from the prototype's mechanical starting assumptions, with example prices. Not recommendations.</p>
         </div>
       </article>
     </div>
@@ -471,7 +471,7 @@ footer .wrap { display: grid; gap: 8px; }
     <div class="faq">
       <details class="card" open><summary>Is this investment advice?</summary><p>No. IntrinsiQAI is a research tool. It does the arithmetic on your assumptions and watches prices for you. It does not tell you what to buy or sell.</p></details>
       <details class="card"><summary>What does the AI actually do?</summary><p>It reads new filings, summarises what changed, and compares the results with the assumptions you saved. It drafts starting cases for you to edit. It does not pick stocks or set your assumptions for you, and its summaries can be wrong, so the filing figures are always shown beside them.</p></details>
-      <details class="card"><summary>Where does the data come from?</summary><p>Financial statements come from the SEC's EDGAR database, which holds what each company itself filed. Prices come from a market-data provider and are shown with the time they were taken.</p></details>
+      <details class="card"><summary>Where does the data come from?</summary><p>Financial statements come from the SEC's EDGAR database, which holds what each company itself filed. Share prices will come from a licensed market-data provider and be shown with the time they were taken.</p></details>
       <details class="card"><summary>Which companies are covered?</summary><p>Everything listed on the NYSE and Nasdaq, including foreign companies listed there. Funds and a few issuers that file no structured financial statements are searchable but have nothing to chart.</p></details>
       <details class="card"><summary>What does it cost?</summary><p>$9.99 a month, or $90 a year. Both include everything. Joining the early-access list is free, and nothing is charged until you choose a plan after launch.</p></details>
       <details class="card"><summary>When does it launch?</summary><p>The date is not fixed yet. People on the early-access list will be emailed the day it opens.</p></details>
@@ -504,7 +504,7 @@ footer .wrap { display: grid; gap: 8px; }
 <footer>
   <div class="wrap">
     <span class="logo" style="font-size:17px">IntrinsiQ<span class="ai">AI</span></span>
-    <p>Research tool, not investment advice. Example figures are from a working prototype using companies' SEC filings and share prices of 10 November 2026; the assumptions shown are illustrative. Company names are trademarks of their owners, and IntrinsiQAI is not affiliated with them. <a href="privacy.html">Privacy Policy</a></p>
+    <p>Research tool, not investment advice. Example figures are from a working prototype using companies' SEC filings. Share prices shown are examples, not quotes, and the assumptions are illustrative. Company names are trademarks of their owners, and IntrinsiQAI is not affiliated with them. <a href="privacy.html">Privacy Policy</a></p>
   </div>
 </footer>
 
@@ -541,7 +541,7 @@ document.querySelectorAll("form.signup").forEach((form) => {
 });
 
 /* ---------- Hero demo: Adobe, prototype starting assumptions, 50% margin of safety ---------- */
-const DEMO = { bear: 289.36, base: 480.52, bull: 757.30, last: 237.32, mos: 0.5 };
+const DEMO = { bear: 289.36, base: 480.52, bull: 757.30, mos: 0.5 };
 const ALERT = DEMO.base * (1 - DEMO.mos);
 function spread(items, gap, lo, hi) {
   items.sort((a, b) => a.x - b.x);
@@ -562,7 +562,7 @@ function drawDemo(px) {
   spread(bot, 82, 42, W - 42);
   bot.forEach((o) => { svg.append(S("line", { x1: o.x, x2: o.x, y1: 34, y2: 58, stroke: tok(o.c), "stroke-width": 2, "stroke-dasharray": o.d })); svg.append(S("line", { x1: o.x, x2: o.lx, y1: 58, y2: 72, stroke: tok(o.c) })); svg.append(S("text", { x: o.lx, y: 86, "text-anchor": "middle", fill: tok("--ink") }, o.t)); });
   $("d-price").textContent = "$" + px.toFixed(2);
-  $("d-price-note").textContent = Math.abs(px - DEMO.last) < 0.5 ? "last price, 10 Nov 2026" : "your test price";
+  $("d-price-note").textContent = "example price";
   $("d-out").textContent = "$" + px.toFixed(0);
   const pill = $("d-pill"), gap = px / ALERT - 1;
   if (px <= ALERT) { pill.className = "pill go"; pill.textContent = "Email sent"; $("d-text").textContent = `Reached your alert price of $${ALERT.toFixed(2)}.`; }
@@ -667,7 +667,7 @@ function countUp(el, ms = 900) {
   const t0 = performance.now();
   (function step(now) { const k = Math.min(1, (now - t0) / ms), v = Math.round(to * (1 - Math.pow(1 - k, 3))); el.textContent = (money ? "$" : "") + v.toLocaleString("en-US"); if (k < 1) requestAnimationFrame(step); })(t0);
 }
-const LOG = [["Reading Adobe's SEC filings", "19 years"], ["Drafting bear, base and bull cases", "3 cases"], ["Running earnings and cash-flow models", "11% / 2%"], ["Checking against the price", "$237.32"]];
+const LOG = [["Reading Adobe's SEC filings", "19 years"], ["Drafting bear, base and bull cases", "3 cases"], ["Running earnings and cash-flow models", "11% / 2%"], ["Checking against the price", "watching"]];
 (function runLog() {
   const box = $("ai-log"), line = (text, res, done) => { const ln = document.createElement("div"); ln.className = "ln"; const ic = document.createElement("span"); ic.className = done ? "ok" : "spin"; if (done) ic.textContent = "✓"; const tx = document.createElement("span"); tx.textContent = text; ln.append(ic, tx); if (done && res) { const b = document.createElement("b"); b.textContent = res; ln.append(b); } return ln; };
   if (REDUCED) { LOG.forEach(([t, r]) => box.append(line(t, r, true))); return; }

@@ -186,6 +186,7 @@ td.num, td .num { font-family: var(--f-mono); }
 .mail-stats div { background: var(--sunken); border-radius: 9px; padding: 8px 10px; }
 .mail-stats span { display: block; font-size: 11px; color: var(--muted); }
 .mail-stats b { font: 500 15px var(--f-mono); }
+footer a { color: var(--accent); }
 footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var(--muted); font-size: 12.5px; }
 @media (prefers-reduced-motion: no-preference) { .kpi-group button, .nav a, .seg button { transition: background 0.15s, color 0.15s; } }
 </style>
@@ -591,14 +592,14 @@ function convert(d) {
   const snap = ADR_RATIOS.reduce((best, r) => (Math.abs(Math.log(raw / r)) < Math.abs(Math.log(raw / best)) ? r : best), 1);
   const user = ratios[d.ticker] ?? RATIO_FIX[d.ticker];
   const k = user > 0 ? user : Math.abs(Math.log(raw / snap)) < 0.09 ? snap : raw;
-  if (fx === 1 && k === 1) return;
+  if (fx === 1 && k === 1 && !(d.standard === "IFRS" && !qt)) return;
   for (const block of [a, q]) for (const key in block) {
     const f = key === "sharesDil" || key === "sharesOut" ? 1 / k : key === "epsDil" ? fx * k : fx;
     block[key] = block[key].map((v) => (v == null ? null : v * f));
   }
   d.currency = "USD"; d._conv = { from: cur, fx, k, auto: !(ratios[d.ticker] > 0) };
 }
-let PX = { asOf: null, p: {} };   // last-sale snapshot: ticker -> [price, day change %, market value, sector, industry]
+let PX = { asOf: null, p: {} };   // optional data/prices.json from a LICENSED feed: ticker -> [price, day change %, market value, sector, industry]
 function placeholder(t) {
   const d = DATA[t]; if (!d) return NaN;
   const q = (d.quarterly.series.epsDil || []).slice(-4), an = (d.annual.series.epsDil || []).filter(ok);
@@ -607,7 +608,7 @@ function placeholder(t) {
 }
 const lastPrice = (t) => (PX.p[t] && PX.p[t][0] > 0 ? PX.p[t][0] : null);
 const pxDate = () => (PX.asOf ? fmtDate(PX.asOf.slice(0, 10)) : "");
-const priceNote = (t, v) => (lastPrice(t) ? (Math.abs(v - lastPrice(t)) < 0.005 ? `last price, ${pxDate()}` : "your test price") : Math.abs(v - placeholder(t)) < 0.005 ? "no quote found: placeholder" : "your test price");
+const priceNote = (t, v) => (lastPrice(t) ? (Math.abs(v - lastPrice(t)) < 0.005 ? `last price, ${pxDate()}` : "your test price") : Math.abs(v - placeholder(t)) < 0.005 ? "placeholder: no price feed connected" : "your test price");
 const models = {}, prices = {};
 const CASES = ["bear", "base", "bull"], CASE_NAME = { bear: "Bear", base: "Base", bull: "Bull" };
 let model, price;
@@ -912,7 +913,7 @@ function loadCompany(t) {
     inp.style.cssText = "width:74px;padding:3px 6px;border-radius:7px;border:1px solid var(--line);background:var(--bg);font:500 13px var(--f-mono);margin:0 4px";
     inp.addEventListener("change", () => { const v = parseFloat(inp.value); if (v > 0) { ratios[t] = v; try { localStorage.setItem("iq_ratio", JSON.stringify(ratios)); } catch {} loadCompany(t); } });
     if (c.from !== "USD") note.append(H("b", "", `${D.name} reports in ${c.from}. `), document.createTextNode(`Everything here is converted to US dollars at one rate (${c.from} 1 = $${c.fx >= 0.01 ? c.fx.toFixed(4) : c.fx.toPrecision(3)}, ${FX.asOf ? fmtDate(new Date(FX.asOf).toISOString().slice(0, 10)) : "latest"}), so growth rates match the company's own. `));
-    note.append(H("b", "", "Per-share figures are per US-listed share. "), document.createTextNode("One US share stands for"), inp, document.createTextNode(`ordinary share${c.k === 1 ? "" : "s"}` + (c.auto ? ", worked out from market value. Correct it if you know the exact ratio." : ", as you set it.")), document.createTextNode(" "));
+    note.append(H("b", "", "Per-share figures are per US-listed share. "), document.createTextNode("One US share stands for"), inp, document.createTextNode(`ordinary share${c.k === 1 ? "" : "s"}` + (!c.auto ? ", as you set it." : PX.p[t] ? ", worked out from market value. Correct it if you know the exact ratio." : ". Without a price feed this is assumed to be 1: set the real ADR ratio if it differs.")), document.createTextNode(" "));
   }
   if (!filedShares && capShares) note.append(H("b", "", "Share count is estimated. "), document.createTextNode("The filings give no share count, so this uses market value divided by the share price. "));
   if (D.sharesApprox) note.append(H("b", "", "Per-share figures are approximate. "), document.createTextNode("The statements give no share count, so this uses the count on the filing's cover page, which can leave out other share classes. Check it before relying on a per-share value. "));
@@ -995,7 +996,8 @@ find.addEventListener("keydown", (e) => {
   catch { $("co-name").textContent = "Couldn't load the company list"; $("co-sub").textContent = "Reload the page to try again."; return; }
   try { const r = await fetch("data/prices.json"); if (r.ok) PX = await r.json(); } catch { /* the page works without quotes */ }
   try { const r = await fetch("data/fx.json"); if (r.ok) FX = await r.json(); } catch { /* foreign filers stay in their own currency */ }
-  if (PX.asOf) $("foot").textContent = $("foot").textContent.replace("Share prices are typed values, not live quotes.", `Share prices are last-sale quotes captured ${pxDate()}, not a live feed.`);
+  if (PX.asOf) $("foot").textContent = $("foot").textContent.replace("Share prices are typed values, not live quotes.", `Share prices are a snapshot of ${pxDate()}, not a live feed.`);
+  if (FX.asOf) { const f = $("foot"), a = document.createElement("a"); a.href = "https://www.exchangerate-api.com"; a.rel = "noopener"; a.textContent = "Rates By Exchange Rate API"; f.append(" Currency conversion: ", a, "."); }
   find.placeholder = `Search ${INDEX.length.toLocaleString()} companies`;
   const want = [state.ticker, "ADBE", INDEX[0] && INDEX[0][0]].find((t) => t && INDEX.some((r) => r[0] === t && r[2] >= 0));
   await openCompany(want); connectStore();
