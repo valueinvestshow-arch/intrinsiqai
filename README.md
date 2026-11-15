@@ -12,7 +12,11 @@ site/                          the pre-launch website (static files)
 worker/index.js                routes /api/* and serves site/
 worker/api/waitlist.js         saves a sign-up (POST /api/waitlist)
 worker/api/export.js           feeds the admin page (GET /api/export, needs the admin token)
+worker/api/auth.js             sign-in by emailed link: /api/auth/request, /api/auth/verify, /api/auth/logout, /api/me
+worker/api/watchlist.js        saved valuations, with the free and premium limits enforced
+worker/lib.js                  sessions, plans and shared helpers
 db/schema.sql                  run once to create the sign-up table
+db/schema_app.sql              run once to create accounts, sessions and watchlists
 src/landing.src.html           landing page source; edit this, then run tools/build_landing.py
 src/tester.src.html            the product prototype (KPI charts, three-case valuation, watchlist)
 tester.html, landing.html      preview copies of the two pages
@@ -27,6 +31,10 @@ The site is a Cloudflare Worker with static assets: `wrangler.toml` serves every
 - Database: D1 `buybelow-waitlist`, EU jurisdiction, bound as `DB` in `wrangler.toml`. The table comes from `db/schema.sql`.
 - Admin password: a secret named `ADMIN_TOKEN`, set in the dashboard (Worker -> Settings -> Variables and Secrets). Never in the repository.
 - Domain: buybelow.io, added under the Worker's Domains & Routes.
+
+Sign-in emails need a `RESEND_API_KEY` secret; until it is set, `/api/auth/request` answers that sign-in is not open yet.
+
+Plans: free accounts can open seven companies (AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA) and keep two on the watchlist; premium has no limits. The rules live in `worker/lib.js`.
 
 Run it locally with `npx wrangler dev` (put `ADMIN_TOKEN=...` in a `.dev.vars` file, which is git-ignored).
 
