@@ -168,7 +168,7 @@ td.num, td .num { font-family: var(--f-mono); }
 .watch-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 960px) { .watch-grid { grid-template-columns: 1fr; } }
 .wl { padding: 6px 6px 12px; min-width: 0; }
-.wl table { min-width: 640px; }
+.wl table { min-width: 860px; }
 .wl td b { font-family: var(--f-display); font-size: 15px; }
 .wl tbody tr { cursor: pointer; }
 .wl tbody tr[aria-current="true"] td { background: var(--accent-soft); }
@@ -662,7 +662,7 @@ function trigger(rule, vals, mdl, custom) {
   return vals.base.iv * (1 - mdl.mos / 100);
 }
 const RULE_TEXT = { mos: (m) => `base value less ${m.mos}% margin of safety`, base: () => "base value", bear: () => "bear value", custom: () => "your set price" };
-function status(px, trig) { return px <= trig ? ["go", "Buy zone"] : px <= trig * 1.1 ? ["near", "Within 10%"] : ["wait", "Watching"]; }
+function status(px, trig) { return px <= trig ? ["go", "Buy zone"] : px <= trig * 1.15 ? ["near", "Within 15%"] : ["wait", "Watching"]; }
 
 function spread(items, gap, lo, hi) {
   items.sort((a, b) => a.x - b.x);
@@ -816,7 +816,7 @@ function renderWatch() {
     const a = H("a", "btn small", "Go to valuation"); a.href = "#valuation"; e.append(a); wl.append(e);
   } else {
     const box = H("div", "tbl"), t = H("table");
-    t.innerHTML = "<thead><tr><th>Company</th><th>Price</th><th>Bear</th><th>Base</th><th>Bull</th><th>Alert at</th><th>To alert</th><th>Status</th></tr></thead>";
+    t.innerHTML = "<thead><tr><th>Company</th><th>Price</th><th>Bear</th><th>Base</th><th>Bull</th><th>Buy below</th><th>To buy price</th><th style=\"text-align:left\">Base-case assumptions</th><th>Status</th></tr></thead>";
     const tb = H("tbody");
     items.forEach((it) => {
       const tr = H("tr"), c = H("td"); c.append(H("b", "", it.ticker), H("small", "", it.name)); tr.append(c);
@@ -825,6 +825,7 @@ function renderWatch() {
       const open = () => { if (it.ticker !== D.ticker) openCompany(it.ticker); };
       tr.addEventListener("click", open); tr.addEventListener("keydown", (e) => { if (e.key === "Enter") open(); });
       [usd(px), usd(it.values.bear.iv), usd(it.values.base.iv), usd(it.values.bull.iv), usd(it.alertPrice), px <= it.alertPrice ? "reached" : "−" + (gap / (1 + gap) * 100).toFixed(0) + "%"].forEach((x) => tr.append(H("td", "num", x)));
+      const as = H("td", "", `${it.model.base.g}% growth · ${it.model.base.m}% margin · ${it.model.base.pe}× P/E`); as.style.cssText = "text-align:left;color:var(--muted);font-size:12.5px"; tr.append(as);
       const s = H("td"); s.append(H("span", "pill " + cls, lab)); tr.append(s); tb.append(tr);
     });
     t.append(tb); box.append(t); wl.append(box);

@@ -118,12 +118,35 @@ svg text { font-family: var(--f); font-size: 12px; font-variant-numeric: tabular
 .try svg { width: 30px; height: 30px; color: var(--muted); }
 .fine { font-size: 13px; color: var(--muted); text-align: center; margin-top: 14px; }
 
+/* Watchlist */
+.lead { color: var(--muted); font-size: 19px; max-width: 34em; }
+.wl-bar { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.wl-px { display: grid; gap: 2px; font-size: 14px; color: var(--muted); min-width: min(260px, 100%); text-align: left; }
+.wl-px b { color: var(--ink); font-weight: 600; }
+.wl-px input { width: 100%; accent-color: var(--accent); margin: 0; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 16px; text-align: right; }
+th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-size: 12.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+th:first-child, td:first-child, th.l, td.l { text-align: left; }
+th.bear { color: var(--bear); } th.base { color: var(--base); } th.bull { color: var(--bull); } th.buy { color: var(--accent); }
+td.num { font-variant-numeric: tabular-nums; }
+td.bear { color: var(--bear); } td.base { color: var(--base); } td.bull { color: var(--bull); }
+td.buy { font-weight: 800; font-size: 18px; color: var(--ink); background: var(--accent-soft); }
+td .tk { font-weight: 800; display: block; } td small { color: var(--muted); font-size: 13px; }
+td.assume { color: var(--muted); font-size: 14.5px; }
+tr.live td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+tr.hit td { background: var(--bull-soft); } tr.hit td.buy { background: var(--bull-soft); }
+
 /* Sections */
 section.band { padding-block: 104px 0; }
 .head { text-align: center; display: grid; gap: 10px; justify-items: center; margin-bottom: 44px; }
 .head h2 { font-size: clamp(30px, 4.6vw, 46px); line-height: 1.08; font-weight: 800; max-width: 18em; }
-.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
-@media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+@media (max-width: 900px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
 .step { text-align: center; display: grid; gap: 8px; justify-items: center; }
 .step .n { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 19px; display: grid; place-items: center; }
 .step h3 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
@@ -187,7 +210,7 @@ footer .wrap { display: grid; gap: 10px; }
 <header class="nav">
   <div class="wrap">
     <a class="logo" href="#top" aria-label="BuyBelow home"><svg viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="6" width="20" height="3" rx="1.5" fill="#E16540" opacity="0.35"/><circle cx="11" cy="16" r="4" fill="#E16540"/></svg>BuyBelow</a>
-    <nav class="nav-links" aria-label="Sections"><a href="#demo">Demo</a><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></nav>
+    <nav class="nav-links" aria-label="Sections"><a href="#demo">Demo</a><a href="#watchlist">Watchlist</a><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></nav>
     <a class="btn quiet" href="#join">Join waitlist</a>
   </div>
 </header>
@@ -222,7 +245,7 @@ footer .wrap { display: grid; gap: 10px; }
             <div class="stat bear"><span>Bear value</span><b class="num" id="s-bear"></b><small id="s-bear-d"></small></div>
             <div class="stat base"><span>Base value</span><b class="num" id="s-base"></b><small id="s-base-d"></small></div>
             <div class="stat bull"><span>Bull value</span><b class="num" id="s-bull"></b><small id="s-bull-d"></small></div>
-            <div class="stat"><span>Alert at</span><b class="num" id="s-alert"></b><small id="s-alert-d"></small></div>
+            <div class="stat"><span>Buy below</span><b class="num" id="s-alert"></b><small id="s-alert-d"></small></div>
             <div class="stat"><span>Status</span><b style="font-size:15px;padding-top:6px"><span class="pill wait" id="s-pill"></span></b></div>
           </div>
           <div class="demo-grid">
@@ -251,12 +274,34 @@ footer .wrap { display: grid; gap: 10px; }
 
 <section class="band">
   <div class="wrap">
-    <div class="head reveal"><h2>From ticker to alert in 3 steps</h2></div>
+    <div class="head reveal"><h2>From ticker to alert in 4 steps</h2></div>
     <div class="steps reveal">
       <div class="step"><span class="n">1</span><h3>Pick a stock</h3><p>Twenty years of its numbers load in a second.</p></div>
       <div class="step"><span class="n">2</span><h3>Set three cases</h3><p>Bear, base and bull. Your assumptions, your value.</p></div>
-      <div class="step"><span class="n">3</span><h3>Get the email</h3><p>When the price reaches your number, you hear about it.</p></div>
+      <div class="step"><span class="n">3</span><h3>Save to your watchlist</h3><p>Your values, buy price and reasoning, kept in one place.</p></div>
+      <div class="step"><span class="n">4</span><h3>Get the email</h3><p>When the price reaches your number, you hear about it.</p></div>
     </div>
+  </div>
+</section>
+
+<section class="band" id="watchlist">
+  <div class="wrap">
+    <div class="head reveal"><p class="eyebrow">Watchlist</p><h2>Every stock you've valued, on one screen</h2><p class="lead">Your three values, your buy price and the assumptions behind them, checked against the price every day.</p></div>
+    <div class="frame reveal">
+      <div class="win">
+        <div class="wl-bar">
+          <div class="legend"><span class="pill wait">Watching</span><span class="pill near">Within 15%</span><span class="pill go">Buy zone</span></div>
+          <label class="wl-px" for="w-px"><span>Try it: Adobe's example price <b class="num" id="w-px-out"></b></span><input id="w-px" type="range" min="120" max="620" step="1"></label>
+        </div>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Stock</th><th>Price</th><th class="bear">Bear</th><th class="base">Base</th><th class="bull">Bull</th><th class="buy">Buy below</th><th class="l">Base-case assumptions</th><th class="l">Status</th></tr></thead>
+            <tbody id="w-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="fine">Buy below is your base value less your margin of safety. Values are from the prototype's starting assumptions; prices are examples, not quotes. Not recommendations.</p>
   </div>
 </section>
 
@@ -268,15 +313,6 @@ footer .wrap { display: grid; gap: 10px; }
         <h3>Three cases, not one target</h3>
         <p>Earnings and cash-flow models side by side, with the company's record next to every input.</p>
         <div class="viz"><div class="cases"><div class="bear"><span>Bear</span><b class="num">$289</b></div><div class="base"><span>Base</span><b class="num">$480</b></div><div class="bull"><span>Bull</span><b class="num">$756</b></div></div></div>
-      </article>
-      <article class="card reveal">
-        <h3>A watchlist that remembers</h3>
-        <p>Every valuation you save, measured against today's price, with your thesis attached.</p>
-        <div class="viz rows">
-          <div class="row"><b>ADBE</b><span>alert at $240</span><span class="pill go">Buy zone</span></div>
-          <div class="row"><b>AAPL</b><span>alert at $87</span><span class="pill wait">Watching</span></div>
-          <div class="row"><b>ONON</b><span>alert at $8</span><span class="pill wait">Watching</span></div>
-        </div>
       </article>
       <article class="card reveal">
         <h3>One email, at the right moment</h3>
@@ -427,11 +463,31 @@ function renderDemo() {
   const v = { bear: valueOf(CASES.bear), base: valueOf(CASES.base), bull: valueOf(CASES.bull) }, alertAt = v.base * (1 - mos / 100);
   $("s-price").textContent = money(px);
   ["bear", "base", "bull"].forEach((c) => { $("s-" + c).textContent = money(v[c]); $("s-" + c + "-d").textContent = vs(v[c]); });
+  renderWatch(v);
   $("s-alert").textContent = money(alertAt); $("s-alert-d").textContent = `base less ${mos}%`;
   const pill = $("s-pill"), gap = px / alertAt - 1;
-  if (px <= alertAt) { pill.className = "pill go"; pill.textContent = "Email sent"; $("a-text").textContent = `Adobe reached your alert price of ${money(alertAt)}. You get one email.`; }
-  else if (gap <= 0.1) { pill.className = "pill near"; pill.textContent = "Within 10%"; $("a-text").textContent = `${(gap / (1 + gap) * 100).toFixed(0)}% above your alert price. Nearly there.`; }
-  else { pill.className = "pill wait"; pill.textContent = "Watching"; $("a-text").textContent = `The price has to fall ${(gap / (1 + gap) * 100).toFixed(0)}% to reach your alert.`; }
+  if (px <= alertAt) { pill.className = "pill go"; pill.textContent = "Email sent"; $("a-text").textContent = `Adobe is at or below your buy price of ${money(alertAt)}. You get one email.`; }
+  else if (gap <= 0.15) { pill.className = "pill near"; pill.textContent = "Within 15%"; $("a-text").textContent = `${(gap / (1 + gap) * 100).toFixed(0)}% above your buy price. Nearly there.`; }
+  else { pill.className = "pill wait"; pill.textContent = "Watching"; $("a-text").textContent = `The price has to fall ${(gap / (1 + gap) * 100).toFixed(0)}% to reach your buy price.`; }
+}
+const WATCH = [
+  { t: "AAPL", n: "Apple", px: 350, bear: 101.02, base: 173.54, bull: 267.29, a: "10.5% growth · 26.5% margin · 20.5× P/E" },
+  { t: "KO", n: "Coca-Cola", px: 70, bear: 28.93, base: 44.69, bull: 65.11, a: "7.5% growth · 26.5% margin · 17.5× P/E" },
+  { t: "ONON", n: "On Holding", px: 37, bear: 5.71, base: 15.57, bull: 30.13, a: "15% growth · 3.5% margin · 25× P/E" },
+];
+function renderWatch(v) {
+  const b = CASES.base, rows = [{ t: "ADBE", n: "Adobe", px, bear: v.bear, base: v.base, bull: v.bull, a: `${b.g}% growth · ${b.m}% margin · ${b.pe}× P/E`, live: true }].concat(WATCH);
+  const body = $("w-body"); body.replaceChildren();
+  rows.forEach((r) => {
+    const buy = r.base * (1 - mos / 100), state = r.px <= buy ? ["go", "Buy zone"] : r.px <= buy * 1.15 ? ["near", "Within 15%"] : ["wait", "Watching"];
+    const tr = document.createElement("tr"); tr.className = (r.live ? "live " : "") + (state[0] === "go" ? "hit" : "");
+    const cell = (cls, text) => { const td = document.createElement("td"); td.className = cls; td.textContent = text; return td; };
+    const first = document.createElement("td"); const tk = document.createElement("span"); tk.className = "tk"; tk.textContent = r.t; const nm = document.createElement("small"); nm.textContent = r.n; first.append(tk, nm);
+    const st = document.createElement("td"); st.className = "l"; const pill = document.createElement("span"); pill.className = "pill " + state[0]; pill.textContent = state[1]; st.append(pill);
+    tr.append(first, cell("num", money(r.px)), cell("num bear", money(r.bear)), cell("num base", money(r.base)), cell("num bull", money(r.bull)), cell("num buy", money(buy)), cell("l assume", r.a), st);
+    body.append(tr);
+  });
+  $("w-px").value = px; $("w-px-out").textContent = "$" + px;
 }
 function loadCase(c) {
   editing = c; $("knobs").dataset.c = c;
@@ -443,6 +499,7 @@ document.querySelectorAll("#case-seg button").forEach((b) => b.addEventListener(
 [["k-g", "g"], ["k-m", "m"], ["k-pe", "pe"]].forEach(([id, k]) => $(id).addEventListener("input", (e) => { CASES[editing][k] = +e.target.value; renderDemo(); }));
 $("k-mos").addEventListener("input", (e) => { mos = +e.target.value; renderDemo(); });
 $("k-px").addEventListener("input", (e) => { px = +e.target.value; renderDemo(); });
+$("w-px").addEventListener("input", (e) => { px = +e.target.value; $("k-px").value = px; renderDemo(); });
 $("k-mos").value = mos; $("k-px").value = px;
 
 /* ---------- KPI chart: Adobe fiscal 2016 to 2025, worked out from its SEC filings ---------- */
