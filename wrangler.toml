@@ -3,10 +3,8 @@ name = "buybelow"
 pages_build_output_dir = "site"
 compatibility_date = "2026-11-01"
 
-# The sign-up list. Fill in database_id after creating the database:
-#   wrangler d1 create buybelow-waitlist --jurisdiction eu
-#   wrangler d1 execute buybelow-waitlist --remote --file db/schema.sql
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "buybelow-waitlist"
-# database_id = ""
+# The sign-up list: a D1 database held in Cloudflare's EU jurisdiction.
+[[d1_databases]]
+binding = "DB"
+database_name = "buybelow-waitlist"
+database_id = "6b20f0ab-7892-47b4-8cfe-5d29b803f67d"
