@@ -1,8 +1,8 @@
-<title>IntrinsiQAI Tester</title>
+<title>BuyBelow Tester</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@300..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a working tool in three stacked stations (explore KPIs, value three cases, watch), under a sticky company bar that carries the live price. Tokens follow the IntrinsiQAI landing page. */
+/* Layout: a working tool in three stacked stations (explore KPIs, value three cases, watch), under a sticky company bar that carries the live price. Tokens follow the BuyBelow landing page. */
 :root {
   --bg: #F4F6FA; --surface: #FFFFFF; --sunken: #EBEEF4; --ink: #0D1424; --muted: #5A6579; --line: #DADFE8;
   --accent: #2347E8; --accent2: #0EA5C0; --accent-ink: #FFFFFF; --accent-soft: rgba(35, 71, 232, 0.10);
@@ -193,7 +193,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
 
 <header class="bar">
   <div class="wrap">
-    <span class="logo">IntrinsiQ<span class="ai">AI</span></span>
+    <span class="logo">BuyBelow</span>
     <div class="co"><span class="sq" id="co-sq"></span><div><b id="co-name"></b><small id="co-sub"></small></div></div>
     <div class="quote" id="quote" hidden><b class="num" id="q-price"></b><span class="num" id="q-chg"></span><small id="q-sub"></small></div>
     <div class="find"><input id="find" type="search" placeholder="Search ticker or company" autocomplete="off" aria-label="Search companies" aria-controls="find-list"><div class="find-list" id="find-list" role="listbox" hidden></div></div>
@@ -992,7 +992,7 @@ find.addEventListener("keydown", (e) => {
 (async function boot() {
   loadLocal();
   $("co-name").textContent = "Loading companies…";
-  try { const r = await fetch("data/index.json"); if (!r.ok) throw new Error(r.status); const j = await r.json(); INDEX = j.companies; INDEX.forEach((row) => { row[1] = cleanName(row[1]); }); $("foot").textContent = `IntrinsiQAI tester covering ${INDEX.length.toLocaleString()} NYSE and Nasdaq listings (${INDEX.filter((r) => r[2] >= 0).length.toLocaleString()} with financials), built ${fmtDate(j.built)}. Financials: SEC EDGAR XBRL company facts (10-K and 10-Q filings). Share prices are typed values, not live quotes. Research tool, not investment advice. Company names are trademarks of their owners; IntrinsiQAI is not affiliated with them.`; }
+  try { const r = await fetch("data/index.json"); if (!r.ok) throw new Error(r.status); const j = await r.json(); INDEX = j.companies; INDEX.forEach((row) => { row[1] = cleanName(row[1]); }); $("foot").textContent = `BuyBelow tester covering ${INDEX.length.toLocaleString()} NYSE and Nasdaq listings (${INDEX.filter((r) => r[2] >= 0).length.toLocaleString()} with financials), built ${fmtDate(j.built)}. Financials: SEC EDGAR XBRL company facts (10-K and 10-Q filings). Share prices are typed values, not live quotes. Research tool, not investment advice. Company names are trademarks of their owners; BuyBelow is not affiliated with them.`; }
   catch { $("co-name").textContent = "Couldn't load the company list"; $("co-sub").textContent = "Reload the page to try again."; return; }
   try { const r = await fetch("data/prices.json"); if (r.ok) PX = await r.json(); } catch { /* the page works without quotes */ }
   try { const r = await fetch("data/fx.json"); if (r.ok) FX = await r.json(); } catch { /* foreign filers stay in their own currency */ }

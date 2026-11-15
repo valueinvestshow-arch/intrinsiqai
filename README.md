@@ -1,4 +1,4 @@
-# IntrinsiQAI
+# BuyBelow (working name; repository still called intrinsiqai)
 
 Value a stock under bear, base and bull cases, keep every valuation next to the live price, and get an email when the price reaches the number you set.
 
@@ -8,7 +8,7 @@ site/                          the pre-launch website (Cloudflare Pages output d
   privacy.html                 privacy policy
   admin.html                   private dashboard for the sign-up list
   _headers                     security headers
-  fonts/                       self-hosted Geologica and IBM Plex Mono, with their licence
+  fonts/                       self-hosted DM Sans and Caveat, with their licence
 functions/api/waitlist.js      saves a sign-up (POST /api/waitlist)
 functions/api/export.js        feeds the admin page (GET /api/export, needs the admin token)
 db/schema.sql                  run once to create the sign-up table

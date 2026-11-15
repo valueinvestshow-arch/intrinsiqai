@@ -33,7 +33,7 @@ export async function onRequestGet({ request, env }) {
       const { results } = await env.DB.prepare("SELECT email, current_method, source, consent_text, consent_at, created_at FROM waitlist ORDER BY created_at").all();
       const cols = ["email", "current_method", "source", "consent_text", "consent_at", "created_at"];
       const lines = [cols.join(",")].concat(results.map((r) => cols.map((c) => csvCell(r[c])).join(",")));
-      return new Response(lines.join("\r\n") + "\r\n", { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="intrinsiqai-waitlist.csv"', "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+      return new Response(lines.join("\r\n") + "\r\n", { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="buybelow-waitlist.csv"', "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
     }
     const [totals, methods, sources, latest] = await env.DB.batch([
       env.DB.prepare("SELECT COUNT(*) AS total, SUM(created_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-7 days')) AS last7days, SUM(date(created_at) = date('now')) AS today FROM waitlist"),
