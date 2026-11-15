@@ -1,36 +1,21 @@
 <title>BuyBelow Tester</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@300..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,800&display=swap">
 <style>
-/* Layout: a working tool in three stacked stations (explore KPIs, value three cases, watch), under a sticky company bar that carries the live price. Tokens follow the BuyBelow landing page. */
+/* One warm light look, by choice, shared with the landing page. Layout: a working tool in three stacked stations (explore KPIs, value three cases, watch), under a sticky company bar that carries the price. */
 :root {
-  --bg: #F4F6FA; --surface: #FFFFFF; --sunken: #EBEEF4; --ink: #0D1424; --muted: #5A6579; --line: #DADFE8;
-  --accent: #2347E8; --accent2: #0EA5C0; --accent-ink: #FFFFFF; --accent-soft: rgba(35, 71, 232, 0.10);
-  --bear: #C93C3C; --base: #B07A06; --bull: #1C8553;
-  --bear-soft: rgba(201, 60, 60, 0.10); --base-soft: rgba(176, 122, 6, 0.12); --bull-soft: rgba(28, 133, 83, 0.11);
-  --f-display: "Geologica", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --f-body: "Geologica", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  --r: 14px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #080D16; --surface: #101827; --sunken: #0C1320; --ink: #E8ECF4; --muted: #93A0B7; --line: #222E42;
-    --accent: #7790FF; --accent2: #3FD6EA; --accent-ink: #080D16; --accent-soft: rgba(119, 144, 255, 0.14);
-    --bear: #EF7171; --base: #D9A441; --bull: #4CC08A;
-    --bear-soft: rgba(239, 113, 113, 0.13); --base-soft: rgba(227, 174, 71, 0.13); --bull-soft: rgba(76, 192, 138, 0.13);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #080D16; --surface: #101827; --sunken: #0C1320; --ink: #E8ECF4; --muted: #93A0B7; --line: #222E42;
-  --accent: #7790FF; --accent2: #3FD6EA; --accent-ink: #080D16; --accent-soft: rgba(119, 144, 255, 0.14);
-  --bear: #EF7171; --base: #D9A441; --bull: #4CC08A;
-  --bear-soft: rgba(239, 113, 113, 0.13); --base-soft: rgba(227, 174, 71, 0.13); --bull-soft: rgba(76, 192, 138, 0.13);
-  color-scheme: dark;
+  --bg: #FAF9F7; --surface: #FFFFFF; --sunken: #F3F1EE; --ink: #262626; --muted: #6B6862; --line: #E7E4DF;
+  --accent: #E16540; --accent2: #F0A58C; --accent-ink: #FFFFFF; --accent-soft: rgba(225, 101, 64, 0.12);
+  --bear: #C94A4A; --base: #B07A06; --bull: #23875A;
+  --bear-soft: rgba(201, 74, 74, 0.11); --base-soft: rgba(176, 122, 6, 0.13); --bull-soft: rgba(35, 135, 90, 0.12);
+  --f-display: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r: 16px;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font: 300 15px/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
+body { background: var(--bg); color: var(--ink); font: 400 15.5px/1.5 var(--f-body); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
 .wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1, h2, h3 { font-family: var(--f-display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
 p { margin: 0; }
@@ -45,8 +30,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
 .bar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 10px; }
 .logo { font-family: var(--f-display); font-weight: 800; font-size: 20px; letter-spacing: -0.03em; display: inline-flex; align-items: center; }
-.logo { font-weight: 700; }
-.logo .ai { font-weight: 300; color: var(--accent); }
+.logo { font-weight: 800; gap: 9px; }
 .co { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .co .sq { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: var(--sunken); font-family: var(--f-mono); font-size: 12px; color: var(--muted); flex: none; }
 .co b { font-family: var(--f-display); font-size: 17px; display: block; line-height: 1.15; }
@@ -81,7 +65,7 @@ section { scroll-margin-top: 120px; display: grid; gap: 16px; }
 .sec-head h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 800; }
 .sec-head p { color: var(--muted); max-width: 70ch; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 600 14px/1 var(--f-body); padding: 12px 16px; border-radius: 10px; border: 0; cursor: pointer; background: var(--accent); color: var(--accent-ink); white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 500 15px/1 var(--f-body); padding: 13px 18px; border-radius: 8px; border: 0; cursor: pointer; background: var(--accent); color: var(--accent-ink); white-space: nowrap; }
 .btn.ghost { background: var(--sunken); color: var(--ink); }
 .btn.small { padding: 8px 11px; font-size: 13px; }
 .seg { display: inline-flex; background: var(--sunken); padding: 3px; border-radius: 9px; gap: 2px; }
@@ -101,13 +85,16 @@ section { scroll-margin-top: 120px; display: grid; gap: 16px; }
 .chart-top h3 { font-size: 22px; }
 .chart-top p { font-size: 13px; color: var(--muted); max-width: 52ch; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.why { margin: 0; background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; }
+.why blockquote { margin: 0; font-size: 16px; font-weight: 500; line-height: 1.35; }
+.why figcaption { font-size: 12.5px; color: var(--muted); }
 .stats { display: flex; flex-wrap: wrap; gap: 8px 28px; }
 .stat span { display: block; font-size: 12px; color: var(--muted); }
 .stat b { font: 500 19px var(--f-mono); }
 .plot { position: relative; min-width: 0; }
 .plot svg { display: block; width: 100%; }
 .plot svg text { font-family: var(--f-mono); font-size: 11px; }
-.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); padding: 7px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -100%); z-index: 3; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: #fff; padding: 7px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -100%); z-index: 3; }
 .tip b { font-family: var(--f-mono); font-weight: 500; display: block; font-size: 14px; }
 .tbl { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
@@ -128,7 +115,7 @@ td.num, td .num { font-family: var(--f-mono); }
 .assume td { padding: 6px 8px; }
 .assume td:first-child { white-space: normal; min-width: 150px; }
 .assume td:first-child small, .hist { display: block; font-size: 11.5px; color: var(--muted); font-family: var(--f-body); }
-.assume td.hist-c { text-align: left; white-space: normal; font-size: 12px; color: var(--muted); min-width: 130px; }
+.assume td.hist-c { text-align: left; white-space: pre-line; font-size: 12.5px; line-height: 1.35; color: var(--muted); min-width: 96px; }
 .cell { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding-right: 7px; }
 .cell input { width: 58px; border: 0; background: transparent; padding: 7px 2px 7px 8px; font: 500 14px var(--f-mono); text-align: right; }
 .cell span { font: 12px var(--f-mono); color: var(--muted); }
@@ -165,7 +152,8 @@ td.num, td .num { font-family: var(--f-mono); }
 .note.ok { color: var(--bull); font-weight: 500; }
 
 /* Watchlist */
-.watch-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.watch-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.sim { max-width: 560px; }
 @media (max-width: 960px) { .watch-grid { grid-template-columns: 1fr; } }
 .wl { padding: 6px 6px 12px; min-width: 0; }
 .wl table { min-width: 860px; }
@@ -193,7 +181,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
 
 <header class="bar">
   <div class="wrap">
-    <span class="logo">BuyBelow</span>
+    <span class="logo"><svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true"><rect x="1" y="6" width="20" height="3" rx="1.5" fill="#E16540" opacity="0.35"/><circle cx="11" cy="16" r="4" fill="#E16540"/></svg>BuyBelow</span>
     <div class="co"><span class="sq" id="co-sq"></span><div><b id="co-name"></b><small id="co-sub"></small></div></div>
     <div class="quote" id="quote" hidden><b class="num" id="q-price"></b><span class="num" id="q-chg"></span><small id="q-sub"></small></div>
     <div class="find"><input id="find" type="search" placeholder="Search ticker or company" autocomplete="off" aria-label="Search companies" aria-controls="find-list"><div class="find-list" id="find-list" role="listbox" hidden></div></div>
@@ -227,6 +215,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
             <div class="seg" id="seg-view" role="group" aria-label="View"><button data-v="chart">Chart</button><button data-v="table">Table</button></div>
           </div>
         </div>
+        <figure class="why" id="k-why" hidden><blockquote id="k-why-q"></blockquote><figcaption id="k-why-by"></figcaption></figure>
         <div class="stats" id="k-stats"></div>
         <div class="plot" id="k-plot"><svg id="k-svg" role="img"></svg><div class="tip" id="k-tip" hidden></div></div>
         <div class="tbl data-tbl" id="k-table" hidden></div>
@@ -261,7 +250,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
       </div>
       <div class="card results">
         <div class="outs" id="outs"></div>
-        <div class="plot"><svg id="range-svg" role="img" aria-label="Bear, base and bull value against the share price and your buy-below price"></svg></div>
+        <div class="plot"><svg id="range-svg" role="img" aria-label="Bear, base and bull value against the share price and your buy price"></svg></div>
         <div class="verdict"><span id="verdict-text"></span><span class="pill wait" id="verdict-pill"></span></div>
         <div>
           <h3 class="sub-h">Earnings per share: record and your three paths</h3>
@@ -271,7 +260,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
         <div class="save-row">
           <label for="thesis" style="flex:none">Thesis note (what has to be true)<textarea id="thesis" placeholder="e.g. pricing power holds, buybacks keep retiring 3% a year, margins stay near today's level."></textarea></label>
           <div class="line">
-            <label for="alert-rule">Email me when the price falls to
+            <label for="alert-rule">Buy below (email me when the price gets there)
               <select id="alert-rule"><option value="mos">Base value less margin of safety</option><option value="base">Base value</option><option value="bear">Bear value</option><option value="custom">A price I set</option></select>
             </label>
             <label for="alert-custom" id="alert-custom-wrap" hidden><span id="alert-custom-l">Alert price</span><input id="alert-custom" type="number" min="1" step="1"></label>
@@ -293,8 +282,8 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
     <div class="watch-grid">
       <div class="card wl" id="wl"></div>
       <div class="card sim">
-        <h3 class="sub-h">Test the alert</h3>
-        <label for="sim" class="muted" style="font-size:13px">Drag the price to see when the alert fires. <b class="num" id="sim-out" style="color:var(--ink)"></b></label>
+        <h3 class="sub-h">Test your buy price</h3>
+        <label for="sim" class="muted" style="font-size:13px">Drag the price to see when the email is sent. <b class="num" id="sim-out" style="color:var(--ink)"></b></label>
         <input id="sim" type="range" step="0.5">
         <div class="mail" id="mail"></div>
         <p class="src">This tester sends nothing. The live version checks prices on a schedule and emails you once when the line is crossed.</p>
@@ -381,6 +370,7 @@ const ALL_METRICS = [
   ["Cash flow", "buybacks", "Share repurchases", "usd", raw("buybacks"), "Cash spent buying back stock."],
   ["Cash flow", "dividends", "Dividends paid", "usd", raw("dividends"), "Cash paid to shareholders as dividends."],
   ["Cash flow", "acq", "Acquisitions", "usd", raw("acquisitions"), "Cash paid for acquisitions, net of cash acquired."],
+  ["Returns", "roce", "ROCE", "pct", (ds, i) => div(g(ds, "opInc", i), avg2((x, j) => sub(g(x, "assets", j), g(x, "curLiab", j)), ds, i)), "Operating income over average capital employed (total assets less current liabilities).", true],
   ["Returns", "roic", "ROIC", "pct", (ds, i) => div(nopat(ds, i), avg2(invCap, ds, i)), "After-tax operating income over average invested capital (equity plus debt less cash and investments).", true],
   ["Returns", "roe", "ROE", "pct", (ds, i) => div(g(ds, "netInc", i), avg2(raw("equity"), ds, i)), "Net income over average shareholders' equity. Buybacks shrink equity and lift this figure.", true],
   ["Returns", "roa", "ROA", "pct", (ds, i) => div(g(ds, "netInc", i), avg2(raw("assets"), ds, i)), "Net income over average total assets.", true],
@@ -398,6 +388,11 @@ const ALL_METRICS = [
   ["Shares", "shG", "Share count change", "pct", yoy(raw("sharesDil")), "Change in diluted shares against a year earlier. Negative means buybacks are outrunning dilution."],
 ].map(([group, key, name, unit, fn, desc, ttm]) => ({ group, key, name, unit, fn, desc, ttm: !!ttm }));
 let METRICS = ALL_METRICS;
+/* Why a KPI matters, in the words of investors known for using it. Quoted from public reports and letters; no endorsement implied. */
+const WHY = {
+  roce: ["A good business is one that can sustain a high return on operating capital employed, in cash.", "Fundsmith, the fund run by Terry Smith"],
+  roe: ["We believe a more appropriate measure of managerial economic performance to be return on equity capital.", "Warren Buffett, 1977 letter to Berkshire Hathaway shareholders"],
+};
 
 function fmt(v, unit, short) {
   if (!ok(v)) return "n/a";
@@ -481,6 +476,8 @@ function drawKpi() {
   const labels = full.labels.slice(-keep), vals = full.vals.slice(-keep);
   $("k-title").textContent = m.name;
   $("k-desc").textContent = m.desc + (full.note ? " " + full.note : "");
+  const why = WHY[m.key]; $("k-why").hidden = !why;
+  if (why) { $("k-why-q").textContent = "“" + why[0] + "”"; $("k-why-by").textContent = why[1]; }
   const stats = $("k-stats"); stats.replaceChildren();
   const add = (l, v) => { const d = H("div", "stat"); d.append(H("span", "", l), H("b", "", v)); stats.append(d); };
   const last = full.vals[full.vals.length - 1], prev = full.vals[full.vals.length - 1 - full.ds.lag];
@@ -614,7 +611,7 @@ const CASES = ["bear", "base", "bull"], CASE_NAME = { bear: "Bear", base: "Base"
 let model, price;
 const growthN = (f, n) => { const v = colA(f); return v.length - 1 >= n ? cagr(v, n, 1) : null; };   // growth a year over n fiscal years
 const avgN = (f, n) => { const v = colA(f); return v.length >= n ? mean(v, n) : null; };                   // average over n fiscal years
-const rec3 = (fn, f, sign = 1) => [1, 3, 5].map((n) => { const v = fn(f, n); return `${n}Y ${ok(v) ? pct(sign * v) : "N/A"}`; }).join(" · ");
+const rec3 = (fn, f, sign = 1) => [1, 3, 5].map((n) => { const v = fn(f, n); return `${n}Y  ${ok(v) ? pct(sign * v) : "N/A"}`; }).join("\n");
 const ROWS = [
   ["g", "Revenue growth", "a year, for 5 years", "%", 0.5, () => rec3(growthN, raw("revenue"))],
   ["m", "Net margin", "in year 5", "%", 0.5, () => rec3(avgN, ofRev(raw("netInc")))],
@@ -686,7 +683,7 @@ function drawRange(svg, vals, px, trig) {
     svg.append(S("line", { x1: o.x, x2: o.lx, y1: 38, y2: 24, stroke: tok(o.c), "stroke-width": 1 }));
     svg.append(S("text", { x: o.lx, y: 18, "text-anchor": "middle", fill: tok("--ink") }, o.t));
   });
-  const bot = [{ x: X(px), t: `Price ${CUR}${px.toFixed(0)}`, c: "--ink", dash: "" }, { x: X(trig), t: `Alert ${CUR}${trig.toFixed(0)}`, c: "--bull", dash: "3 2" }];
+  const bot = [{ x: X(px), t: `Price ${CUR}${px.toFixed(0)}`, c: "--ink", dash: "" }, { x: X(trig), t: `Buy below ${CUR}${trig.toFixed(0)}`, c: "--bull", dash: "3 2" }];
   spread(bot, 84, 42, W - 42);
   bot.forEach((o) => {
     svg.append(S("line", { x1: o.x, x2: o.x, y1: 34, y2: 58, stroke: tok(o.c), "stroke-width": 2, "stroke-dasharray": o.dash }));
@@ -751,7 +748,7 @@ function renderVal() {
   const trig = trigger(rule, vals, model, isFinite(custom) ? custom : Math.round(vals.base.iv * 0.7));
   drawRange($("range-svg"), vals, price, trig);
   const [cls, lab] = status(price, trig), gap = price / trig - 1;
-  $("verdict-text").textContent = price <= trig ? `At ${usd(price)} ${D.ticker} is ${pct(-gap, 0)} below your alert line of ${usd(trig)} (${RULE_TEXT[rule](model)}).` : `Alert line ${usd(trig)} (${RULE_TEXT[rule](model)}). The price has to fall ${pct(gap / (1 + gap), 0)} to reach it.`;
+  $("verdict-text").textContent = price <= trig ? `At ${usd(price)} ${D.ticker} is ${pct(-gap, 0)} below your buy price of ${usd(trig)} (${RULE_TEXT[rule](model)}).` : `Buy below ${usd(trig)} (${RULE_TEXT[rule](model)}). The price has to fall ${pct(gap / (1 + gap), 0)} to reach it.`;
   const pill = $("verdict-pill"); pill.className = "pill " + cls; pill.textContent = lab;
   ROWS.forEach(([k, , , , , hint]) => { $("hist-" + k).textContent = hint(); });
   drawEps(vals);
@@ -802,7 +799,7 @@ $("save").addEventListener("click", async () => {
     history: (prev ? [{ savedAt: prev.savedAt, base: prev.values.base.iv, alertPrice: prev.alertPrice }].concat(prev.history || []) : []).slice(0, 12),
   };
   await persist(item);
-  $("save-note").className = "note ok"; $("save-note").textContent = `Saved. You'll be alerted at ${usd(item.alertPrice)}.`;
+  $("save-note").className = "note ok"; $("save-note").textContent = `Saved. Buy below ${usd(item.alertPrice)}: you'll be emailed when it gets there.`;
   renderWatch();
 });
 
@@ -812,7 +809,7 @@ function renderWatch() {
   wl.replaceChildren();
   if (!items.length) {
     const e = H("div", "empty");
-    e.append(H("b", "", "Nothing saved yet"), H("span", "", "Set your three cases above and save. Each company appears here with its alert line and how far the price is from it."));
+    e.append(H("b", "", "Nothing saved yet"), H("span", "", "Set your three cases above and save. Each company appears here with its buy price and how far the stock is from it."));
     const a = H("a", "btn small", "Go to valuation"); a.href = "#valuation"; e.append(a); wl.append(e);
   } else {
     const box = H("div", "tbl"), t = H("table");
@@ -848,7 +845,7 @@ function renderWatch() {
 }
 
 function renderMail() {
-  if (!CO.ok && !store.items[D.ticker]) { $("mail").replaceChildren(H("div", "mail-b", `${D.ticker} has no valuation to alert on.`)); return; }
+  if (!CO.ok && !store.items[D.ticker]) { $("mail").replaceChildren(H("div", "mail-b", `${D.ticker} has no valuation to watch yet.`)); return; }
   const it = store.items[D.ticker], vals = lastVals || valueAll(model, price);
   const alertPrice = it ? it.alertPrice : trigger($("alert-rule").value, vals, model, parseFloat($("alert-custom").value) || vals.base.iv * 0.7);
   const baseIv = it ? it.values.base.iv : vals.base.iv, sim = $("sim");
@@ -860,7 +857,7 @@ function renderMail() {
   const b = H("div", "mail-b"), shown = fired ? price : alertPrice;
   b.append(H("p", "", `${D.name} is trading at ${usd(shown)}, ${pct(1 - shown / baseIv, 0)} below your base-case value of ${usd(baseIv)}.` + (it ? "" : " (Using the unsaved valuation above.)")));
   const st = H("div", "mail-stats");
-  [["Price", usd(shown)], ["Your alert line", usd(alertPrice)], ["Discount to base", pct(1 - shown / baseIv, 0)]].forEach(([k, v]) => { const d = H("div"); d.append(H("span", "", k), H("b", "", v)); st.append(d); });
+  [["Price", usd(shown)], ["Buy below", usd(alertPrice)], ["Discount to base", pct(1 - shown / baseIv, 0)]].forEach(([k, v]) => { const d = H("div"); d.append(H("span", "", k), H("b", "", v)); st.append(d); });
   b.append(st);
   if (it && it.thesis) b.append(H("p", "muted", "Your thesis: " + it.thesis));
   b.append(H("p", "muted", "Check the latest results still support your assumptions before acting."));
@@ -880,7 +877,7 @@ $("price-reset").addEventListener("click", () => setPrice(lastPrice(D.ticker)));
 $("sim").addEventListener("input", (e) => setPrice(parseFloat(e.target.value)));
 
 /* ---------- Boot ---------- */
-const cleanName = (n) => n.replace(/\s*\/[A-Za-z ]{0,6}\/?\s*$/, "").replace(/\s+/g, " ").trim();
+const cleanName = (n) => n.replace(/\b(INC|CORP|CO|LTD|PLC|LLC|LP|SA|NV|AG|SE)\b/g, (w) => (w.length > 2 ? w[0] + w.slice(1).toLowerCase() : w)).replace(/\s*\/[A-Za-z ]{0,6}\/?\s*$/, "").replace(/\s+/g, " ").trim();
 function loadCompany(t) {
   D = DATA[t]; D.name = cleanName(D.name); convert(D); buildSets(); li = N(T) - 1; lastVals = null;
   CUR = SYMBOL[D.currency] || D.currency + " ";
@@ -927,7 +924,7 @@ function loadCompany(t) {
   $("co-name").textContent = D.name;
   const latest = D.noQ ? A.label[N(A) - 1] : Q.label[li];
   $("co-sub").textContent = `${D.ticker} · ${D.exchange || "US"} · filings through ${latest} (${fmtDate(D.latestPeriodEnd)})`;
-  $("rec-h").textContent = `${D.ticker}'s record, last 1 / 3 / 5 fiscal years`;
+  $("rec-h").textContent = `${D.ticker}'s record`;
   const yrs = N(A), qs = D.noQ ? 0 : N(Q);
   $("kpi-lede").textContent = `${METRICS.length} KPIs built from ${D.name}'s SEC filings: ` + [yrs ? `${yrs} fiscal year${yrs === 1 ? "" : "s"}` : "", qs ? `${qs} ${D.quarterly.per === 2 ? "half-years" : "quarters"}` : ""].filter(Boolean).join(" and ") + "." + (D.noQ ? " This company files annual figures only." : D.quarterly.per === 2 ? " This company files half-yearly, not quarterly." : !yrs ? " No full fiscal year is on file yet." : yrs < 5 ? " Growth and averages use the years available." : "");
   const mb = $("seg-mode").querySelectorAll("button");

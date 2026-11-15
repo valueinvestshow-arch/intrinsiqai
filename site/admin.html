@@ -8,17 +8,15 @@
 <link rel="stylesheet" href="/fonts/fonts.css">
 <style>
 :root {
-  --bg: #F4F6FA; --surface: #FFFFFF; --sunken: #EBEEF4; --ink: #0D1424; --muted: #5A6579; --line: #DADFE8;
-  --accent: #2347E8; --accent2: #0EA5C0; --accent-ink: #FFFFFF; --bad: #C93C3C;
+  --bg: #FAF9F7; --surface: #FFFFFF; --sunken: #F3F1EE; --ink: #262626; --muted: #6B6862; --line: #E7E4DF;
+  --accent: #E16540; --accent2: #F0A58C; --accent-ink: #FFFFFF; --bad: #C94A4A;
   --f-display: "DM Sans", "Segoe UI", system-ui, sans-serif;
   --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
-  --f-mono: ui-monospace, Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #080D16; --surface: #101827; --sunken: #0C1320; --ink: #E8ECF4; --muted: #93A0B7; --line: #222E42; --accent: #7790FF; --accent2: #3FD6EA; --accent-ink: #080D16; --bad: #EF7171; color-scheme: dark; }
+  --f-mono: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-body); font-variant-numeric: tabular-nums; }
 .wrap { max-width: 980px; margin: 0 auto; padding: 32px max(16px, env(safe-area-inset-right, 0px)) 64px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 20px; }
 h1 { font-family: var(--f-display); font-size: 30px; margin: 0; letter-spacing: -0.02em; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
@@ -46,7 +44,7 @@ th { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); text-tr
 </head>
 <body>
 <div class="wrap">
-  <h1>Waitlist admin</h1>
+  <h1 style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true"><rect x="1" y="6" width="20" height="3" rx="1.5" fill="#E16540" opacity="0.35"/><circle cx="11" cy="16" r="4" fill="#E16540"/></svg>BuyBelow waitlist</h1>
   <div class="card">
     <form class="row" id="login">
       <label for="token">Admin token<input id="token" type="password" autocomplete="current-password" placeholder="Paste your ADMIN_TOKEN"></label>
