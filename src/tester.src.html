@@ -612,13 +612,15 @@ const priceNote = (t, v) => (lastPrice(t) ? (Math.abs(v - lastPrice(t)) < 0.005 
 const models = {}, prices = {};
 const CASES = ["bear", "base", "bull"], CASE_NAME = { bear: "Bear", base: "Base", bull: "Bull" };
 let model, price;
-const recText = (rec, now, growth) => { const [v, n] = rec, parts = []; if (n && ok(v)) parts.push(`${pct(v)} ${growth ? "a year over" : "average over"} ${yrsText(n)}`); if (ok(now)) parts.push(`${pct(now)} ${CO.basis}`); return parts.join(" · ") || "No record yet"; };
+const growthN = (f, n) => { const v = colA(f); return v.length - 1 >= n ? cagr(v, n, 1) : null; };   // growth a year over n fiscal years
+const avgN = (f, n) => { const v = colA(f); return v.length >= n ? mean(v, n) : null; };                   // average over n fiscal years
+const rec3 = (fn, f, sign = 1) => [1, 3, 5].map((n) => { const v = fn(f, n); return `${n}Y ${ok(v) ? pct(sign * v) : "N/A"}`; }).join(" · ");
 const ROWS = [
-  ["g", "Revenue growth", "a year, for 5 years", "%", 0.5, () => recText(growthRec(raw("revenue")), yoy(raw("revenue"))(CO.ds, CO.i), true)],
-  ["m", "Net margin", "in year 5", "%", 0.5, () => recText(avgRec(ofRev(raw("netInc"))), CO.ni0 / CO.rev0)],
-  ["f", "Free cash flow margin", "each year", "%", 0.5, () => (CO.hasF ? recText(avgRec(ofRev(fcf)), CO.fcf0 / CO.rev0) : "No cash-flow record on file, so this starts at the net margin")],
-  ["b", "Share count shrinks", "a year, from buybacks", "%", 0.5, () => { const [v, n] = growthRec(raw("sharesDil")); return n && ok(v) ? `${pct(-v)} a year over ${yrsText(n)}` : "No record yet"; }],
-  ["pe", "Exit P/E", "multiple in year 5", "×", 0.5, () => (CO.eps0 > 0 ? `${(price / CO.eps0).toFixed(1)}× today on ${usd(CO.eps0)} of EPS` : `No earnings in the ${CO.basis}`)],
+  ["g", "Revenue growth", "a year, for 5 years", "%", 0.5, () => rec3(growthN, raw("revenue"))],
+  ["m", "Net margin", "in year 5", "%", 0.5, () => rec3(avgN, ofRev(raw("netInc")))],
+  ["f", "Free cash flow margin", "each year", "%", 0.5, () => (CO.hasF ? rec3(avgN, ofRev(fcf)) : "N/A: no cash-flow record on file, so this starts at the net margin")],
+  ["b", "Share count shrinks", "a year, from buybacks", "%", 0.5, () => rec3(growthN, raw("sharesDil"), -1)],
+  ["pe", "Exit P/E", "multiple in year 5", "×", 0.5, () => (CO.eps0 > 0 ? `${(price / CO.eps0).toFixed(1)}× today on ${usd(CO.eps0)} of EPS` : "N/A: no earnings in the " + CO.basis)],
 ];
 function buildAssumptions() {
   const tb = $("assume-body"); tb.replaceChildren();
@@ -924,7 +926,7 @@ function loadCompany(t) {
   $("co-name").textContent = D.name;
   const latest = D.noQ ? A.label[N(A) - 1] : Q.label[li];
   $("co-sub").textContent = `${D.ticker} · ${D.exchange || "US"} · filings through ${latest} (${fmtDate(D.latestPeriodEnd)})`;
-  $("rec-h").textContent = `${D.ticker}'s record`;
+  $("rec-h").textContent = `${D.ticker}'s record, last 1 / 3 / 5 fiscal years`;
   const yrs = N(A), qs = D.noQ ? 0 : N(Q);
   $("kpi-lede").textContent = `${METRICS.length} KPIs built from ${D.name}'s SEC filings: ` + [yrs ? `${yrs} fiscal year${yrs === 1 ? "" : "s"}` : "", qs ? `${qs} ${D.quarterly.per === 2 ? "half-years" : "quarters"}` : ""].filter(Boolean).join(" and ") + "." + (D.noQ ? " This company files annual figures only." : D.quarterly.per === 2 ? " This company files half-yearly, not quarterly." : !yrs ? " No full fiscal year is on file yet." : yrs < 5 ? " Growth and averages use the years available." : "");
   const mb = $("seg-mode").querySelectorAll("button");

@@ -14,7 +14,7 @@ html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area
 :root {
   --bg: #FAF9F7; --surface: #FFFFFF; --sunken: #F3F1EE; --ink: #262626; --muted: #6B6862; --line: #E7E4DF;
   --accent: #E16540; --accent-ink: #FFFFFF; --accent-soft: rgba(225, 101, 64, 0.12); --sky: #7CC4F8; --sky-soft: rgba(124, 196, 248, 0.22);
-  --bear: #C94A4A; --base: #B07A06; --bull: #23875A; --bull-soft: rgba(35, 135, 90, 0.12); --base-soft: rgba(176, 122, 6, 0.13);
+  --bear: #C94A4A; --base: #B07A06; --bull: #23875A; --bull-soft: rgba(35, 135, 90, 0.12); --base-soft: rgba(176, 122, 6, 0.13); --bear-soft: rgba(201, 74, 74, 0.11);
   --shadow: 0 1px 2px rgba(38, 38, 38, 0.05), 0 12px 32px -14px rgba(38, 38, 38, 0.18);
   --f: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
   --f-hand: "Caveat", "Segoe Print", "Bradley Hand", cursive;
@@ -81,6 +81,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 3px; gap: 2px; box-shadow: 0 1px 2px rgba(38, 38, 38, 0.06); }
 .seg button { border: 0; background: transparent; color: var(--muted); font-size: 14.5px; font-weight: 500; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
 .seg button[aria-pressed="true"] { background: var(--sunken); color: var(--ink); }
+.seg button[data-c]::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; background: currentColor; }
+.seg button[data-c="bear"] { color: var(--bear); } .seg button[data-c="base"] { color: var(--base); } .seg button[data-c="bull"] { color: var(--bull); }
+.seg button[data-c="bear"][aria-pressed="true"] { background: var(--bear-soft); color: var(--bear); }
+.seg button[data-c="base"][aria-pressed="true"] { background: var(--base-soft); color: var(--base); }
+.seg button[data-c="bull"][aria-pressed="true"] { background: var(--bull-soft); color: var(--bull); }
+.stat.bear span, .stat.bear b { color: var(--bear); } .stat.base span, .stat.base b { color: var(--base); } .stat.bull span, .stat.bull b { color: var(--bull); }
+.stat.bear span, .stat.base span, .stat.bull span { font-weight: 600; }
+.knobs[data-c="bear"] h3 { color: var(--bear); } .knobs[data-c="base"] h3 { color: var(--base); } .knobs[data-c="bull"] h3 { color: var(--bull); }
+.knobs[data-c="bear"] .case-knob input { accent-color: var(--bear); } .knobs[data-c="base"] .case-knob input { accent-color: var(--base); } .knobs[data-c="bull"] .case-knob input { accent-color: var(--bull); }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 1px 2px rgba(38, 38, 38, 0.04); min-width: 0; }
 .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding: 14px 6px; }
 .stat { padding: 2px 14px; border-left: 1px solid var(--line); min-width: 0; text-align: left; }
@@ -105,6 +114,9 @@ svg text { font-family: var(--f); font-size: 12px; font-variant-numeric: tabular
 .knob label { display: flex; justify-content: space-between; gap: 8px; font-size: 14.5px; color: var(--muted); }
 .knob output { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .knob input { width: 100%; accent-color: var(--accent); margin: 5px 0 0; }
+.rec { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 4px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rec span:first-child { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; align-self: center; }
+.rec b { color: var(--ink); font-weight: 600; }
 .alert { display: flex; gap: 10px; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px; font-size: 14.5px; }
 .pill { font-size: 12.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
@@ -138,9 +150,15 @@ section.band { padding-block: 104px 0; }
 .row { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .row:last-child { border-bottom: 0; } .row b { font-weight: 600; } .row span { color: var(--muted); }
 .mail b { display: block; font-weight: 600; color: var(--ink); } .mail span { color: var(--muted); font-size: 12.5px; }
-.ai { min-height: 6.4em; } .ai .tag { color: var(--accent); font-weight: 600; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 4px; }
-.caret { display: inline-block; width: 7px; height: 1em; background: var(--accent); vertical-align: -2px; margin-left: 2px; animation: blink 1s steps(1) infinite; }
-@keyframes blink { 50% { opacity: 0; } }
+.card.wide { grid-column: 1 / -1; }
+.quotes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 14px; }
+@media (max-width: 760px) { .quotes { grid-template-columns: 1fr; } }
+.q { margin: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 10px; align-content: start; }
+.q blockquote { margin: 0; font-size: 19px; line-height: 1.35; font-weight: 500; letter-spacing: -0.01em; color: var(--ink); }
+.q figcaption { font-size: 14px; color: var(--muted); }
+.kpi-tag { justify-self: start; border: 0; cursor: pointer; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 13.5px; padding: 5px 11px; border-radius: 999px; }
+.kpi-tag:hover { background: var(--accent); color: var(--accent-ink); }
+.card .src { font-size: 13px; margin-top: 6px; }
 .bigfact { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: var(--accent); }
 
 /* Pricing */
@@ -170,7 +188,7 @@ footer { border-top: 1px solid var(--line); padding-block: 26px 40px; color: var
 footer .wrap { display: grid; gap: 10px; }
 .reveal { transition: opacity 0.5s ease, transform 0.5s ease; }
 .reveal.pre { opacity: 0.001; transform: translateY(14px); }
-@media (prefers-reduced-motion: reduce) { .reveal { transition: none; } .caret { animation: none; } .btn, .btn .arrow { transition: none; } html { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) { .reveal { transition: none; } .btn, .btn .arrow { transition: none; } html { scroll-behavior: auto; } }
 </style>
 
 </head>
@@ -210,9 +228,9 @@ footer .wrap { display: grid; gap: 10px; }
           </div>
           <div class="panel stats">
             <div class="stat"><span>Price</span><b class="num" id="s-price"></b><small>example</small></div>
-            <div class="stat"><span>Bear value</span><b class="num" id="s-bear"></b><small id="s-bear-d"></small></div>
-            <div class="stat"><span>Base value</span><b class="num" id="s-base"></b><small id="s-base-d"></small></div>
-            <div class="stat"><span>Bull value</span><b class="num" id="s-bull"></b><small id="s-bull-d"></small></div>
+            <div class="stat bear"><span>Bear value</span><b class="num" id="s-bear"></b><small id="s-bear-d"></small></div>
+            <div class="stat base"><span>Base value</span><b class="num" id="s-base"></b><small id="s-base-d"></small></div>
+            <div class="stat bull"><span>Bull value</span><b class="num" id="s-bull"></b><small id="s-bull-d"></small></div>
             <div class="stat"><span>Alert at</span><b class="num" id="s-alert"></b><small id="s-alert-d"></small></div>
             <div class="stat"><span>Status</span><b style="font-size:15px;padding-top:6px"><span class="pill wait" id="s-pill"></span></b></div>
           </div>
@@ -222,11 +240,11 @@ footer .wrap { display: grid; gap: 10px; }
               <svg id="v-rev" role="img"></svg>
               <p class="cap" id="v-cap" aria-live="polite"></p>
             </div>
-            <div class="panel knobs">
+            <div class="panel knobs" id="knobs">
               <h3 id="k-title"></h3>
-              <div class="knob"><label for="k-g"><span>Revenue growth a year</span><output id="o-g"></output></label><input id="k-g" type="range" min="0" max="25" step="0.5"></div>
-              <div class="knob"><label for="k-m"><span>Net margin</span><output id="o-m"></output></label><input id="k-m" type="range" min="10" max="40" step="0.5"></div>
-              <div class="knob"><label for="k-pe"><span>Exit P/E</span><output id="o-pe"></output></label><input id="k-pe" type="range" min="8" max="40" step="0.5"></div>
+              <div class="knob case-knob"><label for="k-g"><span>Revenue growth a year</span><output id="o-g"></output></label><input id="k-g" type="range" min="0" max="25" step="0.5"><div class="rec"><span>Record</span><span>1Y <b>10.5%</b></span><span>3Y <b>10.5%</b></span><span>5Y <b>13.1%</b></span></div></div>
+              <div class="knob case-knob"><label for="k-m"><span>Net margin</span><output id="o-m"></output></label><input id="k-m" type="range" min="10" max="40" step="0.5"><div class="rec"><span>Record</span><span>1Y <b>30.0%</b></span><span>3Y <b>27.9%</b></span><span>5Y <b>28.3%</b></span></div></div>
+              <div class="knob case-knob"><label for="k-pe"><span>Exit P/E</span><output id="o-pe"></output></label><input id="k-pe" type="range" min="8" max="40" step="0.5"><div class="rec"><span>Record</span><span>1Y <b>N/A</b></span><span>3Y <b>N/A</b></span><span>5Y <b>N/A</b></span></div></div>
               <div class="knob"><label for="k-mos"><span>Margin of safety</span><output id="o-mos"></output></label><input id="k-mos" type="range" min="0" max="70" step="5"></div>
               <div class="knob"><label for="k-px"><span>Example share price</span><output id="o-px"></output></label><input id="k-px" type="range" min="120" max="620" step="1"></div>
               <div class="alert"><span id="a-text"></span></div>
@@ -236,7 +254,7 @@ footer .wrap { display: grid; gap: 10px; }
       </div>
     </div>
     <div class="try"><svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M6 26C8 16 14 9 25 5"/><path d="M25 5l-7 0M25 5l-2 7"/></svg><span class="hand">Drag the sliders</span></div>
-    <p class="fine">Real Adobe figures from its SEC filings. The price and assumptions are examples, not advice.</p>
+    <p class="fine">Real Adobe figures from its SEC filings. Record: growth a year, or the average margin, over the last 1, 3 and 5 fiscal years; N/A where there is no history (P/E needs past prices). The price and assumptions are examples, not advice.</p>
   </div>
 </section>
 
@@ -274,11 +292,6 @@ footer .wrap { display: grid; gap: 10px; }
         <p>No daily noise. One alert when a stock reaches the price you set.</p>
         <div class="viz mail"><span>Email alert</span><b>ADBE hit your buy zone at $239.96</b><span>50% below your base value of $479.92.</span></div>
       </article>
-      <article class="card reveal" id="ai-card">
-        <h3>AI reads the filings for you</h3>
-        <p>New results, summarised and checked against the assumptions you saved.</p>
-        <div class="viz ai"><span class="tag">✦ AI summary · example</span><span id="ai-summary" data-full="Adobe grew revenue 12.9% to $6.76B. Margin slipped to 27.0%, but EPS rose 10.5% as buybacks cut the share count 6.6%. Two of your three assumptions are on track.">Adobe grew revenue 12.9% to $6.76B. Margin slipped to 27.0%, but EPS rose 10.5% as buybacks cut the share count 6.6%. Two of your three assumptions are on track.</span></div>
-      </article>
       <article class="card reveal">
         <h3>Every US-listed stock</h3>
         <p>NYSE and Nasdaq, including foreign companies, converted to dollars.</p>
@@ -288,6 +301,23 @@ footer .wrap { display: grid; gap: 10px; }
         <h3>40+ KPIs, charted</h3>
         <p>Revenue, margins, cash flow, returns, share count. Annual, quarterly or trailing twelve months.</p>
         <div class="viz"><span class="bigfact num" data-count="20">20</span><div class="muted">years of history, where the company has it</div></div>
+      </article>
+      <article class="card wide reveal">
+        <h3>Know which KPIs matter, and why</h3>
+        <p>The numbers the best value investors look at first, explained next to each chart.</p>
+        <div class="quotes">
+          <figure class="q">
+            <button class="kpi-tag" type="button" data-kpi="ROCE">ROCE <span aria-hidden="true">↑</span></button>
+            <blockquote>“A good business is one that can sustain a high return on operating capital employed, in cash.”</blockquote>
+            <figcaption>Fundsmith, the fund run by Terry Smith</figcaption>
+          </figure>
+          <figure class="q">
+            <button class="kpi-tag" type="button" data-kpi="ROE">ROE <span aria-hidden="true">↑</span></button>
+            <blockquote>“We believe a more appropriate measure of managerial economic performance to be return on equity capital.”</blockquote>
+            <figcaption>Warren Buffett, 1977 letter to Berkshire Hathaway shareholders</figcaption>
+          </figure>
+        </div>
+        <p class="src">Quoted from public reports and letters. Neither investor is affiliated with or endorses BuyBelow. Tap a KPI to see it charted for Adobe.</p>
       </article>
     </div>
   </div>
@@ -300,7 +330,7 @@ footer .wrap { display: grid; gap: 10px; }
       <div class="card plan">
         <h3>Monthly</h3>
         <div class="price"><b>$9.99</b><span>/month</span></div>
-        <ul><li>Every US-listed stock</li><li>Three-case valuations</li><li>Watchlist and email alerts</li><li>AI filing summaries</li></ul>
+        <ul><li>Every US-listed stock</li><li>Three-case valuations</li><li>Watchlist and email alerts</li><li>40+ KPIs, charted</li></ul>
         <a class="btn quiet" style="font-size:16px;padding:14px" href="#join">Join the waitlist</a>
       </div>
       <div class="card plan best">
@@ -321,7 +351,6 @@ footer .wrap { display: grid; gap: 10px; }
     <div class="faq reveal">
       <details open><summary>Is this investment advice?</summary><p>No. BuyBelow does the arithmetic on your assumptions and watches prices. It never tells you what to buy or sell.</p></details>
       <details><summary>Where does the data come from?</summary><p>Financial statements come from the SEC's EDGAR database, as each company filed them. Prices will come from a licensed market-data provider.</p></details>
-      <details><summary>What does the AI do?</summary><p>It summarises new filings and compares them with the assumptions you saved. It does not pick stocks, and its summaries can be wrong, so the filed figures are always shown beside them.</p></details>
       <details><summary>When does it launch?</summary><p>No date yet. Everyone on the waitlist gets one email the day it opens.</p></details>
       <details><summary>What happens to my email?</summary><p>It is used only to tell you about BuyBelow. It is stored in the EU, never sold, and you can ask for it to be deleted. See the <a href="privacy.html">Privacy Policy</a>.</p></details>
     </div>
@@ -406,7 +435,7 @@ function renderDemo() {
   $("o-g").textContent = s.g.toFixed(1) + "%"; $("o-m").textContent = s.m.toFixed(1) + "%"; $("o-pe").textContent = s.pe.toFixed(1) + "×"; $("o-mos").textContent = mos + "%"; $("o-px").textContent = "$" + px;
   const v = { bear: valueOf(CASES.bear), base: valueOf(CASES.base), bull: valueOf(CASES.bull) }, alertAt = v.base * (1 - mos / 100);
   $("s-price").textContent = money(px);
-  ["bear", "base", "bull"].forEach((c) => { $("s-" + c).textContent = money(v[c]); const d = $("s-" + c + "-d"); d.textContent = vs(v[c]); d.className = v[c] >= px ? "up" : "down"; });
+  ["bear", "base", "bull"].forEach((c) => { $("s-" + c).textContent = money(v[c]); $("s-" + c + "-d").textContent = vs(v[c]); });
   $("s-alert").textContent = money(alertAt); $("s-alert-d").textContent = `base less ${mos}%`;
   const pill = $("s-pill"), gap = px / alertAt - 1;
   if (px <= alertAt) { pill.className = "pill go"; pill.textContent = "Email sent"; $("a-text").textContent = `Adobe reached your alert price of ${money(alertAt)}. You get one email.`; }
@@ -414,7 +443,7 @@ function renderDemo() {
   else { pill.className = "pill wait"; pill.textContent = "Watching"; $("a-text").textContent = `The price has to fall ${(gap / (1 + gap) * 100).toFixed(0)}% to reach your alert.`; }
 }
 function loadCase(c) {
-  editing = c;
+  editing = c; $("knobs").dataset.c = c;
   document.querySelectorAll("#case-seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.c === c)));
   $("k-g").value = CASES[c].g; $("k-m").value = CASES[c].m; $("k-pe").value = CASES[c].pe;
   renderDemo();
@@ -432,6 +461,8 @@ const KPIS = [
   { name: "EPS", data: [2.32, 3.38, 5.20, 6.00, 10.83, 10.02, 10.10, 11.82, 12.36, 16.70], ticks: [0, 5, 10, 15, 20], fmt: (v) => "$" + v.toFixed(2), tick: (v) => "$" + v, cap: "Diluted earnings per share: $2.32 to $16.70." },
   { name: "FCF margin", data: [34.1, 37.5, 41.7, 36.0, 41.2, 43.6, 42.0, 35.8, 36.6, 41.4], ticks: [0, 15, 30, 45], fmt: (v) => v.toFixed(1) + "%", tick: (v) => v + "%", cap: "Free cash flow margin: 34% to 44% every year." },
   { name: "ROIC", data: [25.7, 37.9, 35.6, 29.0, 38.7, 40.0, 38.3, 43.5, 44.8, 61.6], ticks: [0, 20, 40, 60, 80], fmt: (v) => v.toFixed(1) + "%", tick: (v) => v + "%", cap: "Return on invested capital: 25.7% to 61.6%." },
+  { name: "ROCE", data: [15.4, 20.8, 22.3, 24.2, 27.0, 29.7, 31.0, 32.8, 32.7, 44.6], ticks: [0, 15, 30, 45, 60], fmt: (v) => v.toFixed(1) + "%", tick: (v) => v + "%", cap: "Return on capital employed: 15.4% to 44.6%." },
+  { name: "ROE", data: [16.2, 21.3, 29.1, 29.7, 44.2, 34.4, 33.0, 35.5, 36.3, 55.4], ticks: [0, 20, 40, 60], fmt: (v) => v.toFixed(1) + "%", tick: (v) => v + "%", cap: "Return on equity: 16.2% to 55.4%." },
   { name: "Shares", data: [504, 501, 498, 492, 486, 481, 471, 459, 450, 427], ticks: [0, 200, 400, 600], fmt: (v) => Math.round(v) + "M", tick: (v) => v + "M", cap: "Diluted shares: 504M down to 427M on buybacks." },
 ];
 let kpiOn = 0, kpiShown = KPIS[0].data.slice(), kpiAnim = 0, kpiHover = -1, kpiAuto = true;
@@ -472,27 +503,22 @@ let kpiSeen = false;
 if ("IntersectionObserver" in window) new IntersectionObserver(([en]) => { kpiSeen = en.isIntersecting; }, { threshold: 0.4 }).observe($("v-rev"));
 setInterval(() => { if (kpiAuto && kpiSeen && !document.hidden && !REDUCED) showKpi((kpiOn + 1) % KPIS.length, true); }, 3200);
 
-/* ---------- Small motion: count-ups, typed AI summary, reveals ---------- */
+/* ---------- Small motion: count-ups and reveals ---------- */
 function countUp(el, ms = 1200) {
   if (REDUCED) return;
   const to = +el.dataset.count, t0 = performance.now();
   (function step(now) { const k = Math.min(1, (now - t0) / ms); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))).toLocaleString("en-US"); if (k < 1) requestAnimationFrame(step); })(t0);
 }
-let typed = false;
-function typeSummary() {
-  if (typed || REDUCED) return; typed = true;
-  const el = $("ai-summary"), full = el.dataset.full; let i = 0; const caret = document.createElement("span"); caret.className = "caret";
-  (function step() { i = Math.min(full.length, i + 2); el.textContent = full.slice(0, i); el.append(caret); if (i < full.length) setTimeout(step, 18); else setTimeout(() => caret.remove(), 1400); })();
-}
 (function reveals() {
   const els = [...document.querySelectorAll(".reveal")];
-  const show = (el) => { el.classList.remove("pre"); if (el.id === "ai-card") typeSummary(); el.querySelectorAll("[data-count]").forEach((n) => countUp(n)); };
+  const show = (el) => { el.classList.remove("pre"); el.querySelectorAll("[data-count]").forEach((n) => countUp(n)); };
   if (REDUCED || !("IntersectionObserver" in window)) { els.forEach(show); return; }
   const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { show(en.target); io.unobserve(en.target); } }), { threshold: 0.15 });
   els.forEach((el) => { if (el.getBoundingClientRect().top < window.innerHeight) show(el); else { el.classList.add("pre"); io.observe(el); } });
   setTimeout(() => els.forEach((el) => el.classList.remove("pre")), 6000);
 })();
 
+document.querySelectorAll(".kpi-tag").forEach((b) => b.addEventListener("click", () => { kpiAuto = false; showKpi(KPIS.findIndex((k) => k.name === b.dataset.kpi), true); $("v-chips").scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "center" }); }));
 loadCase("base"); showKpi(0, false);
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => drawKpi(kpiShown), 120); });
 </script>
