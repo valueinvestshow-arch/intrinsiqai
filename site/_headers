@@ -8,6 +8,11 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 
+# The app is not announced yet: keep it out of search engines until launch.
+/app*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-cache
+
 /admin*
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store

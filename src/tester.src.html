@@ -41,6 +41,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .quote span.up { color: var(--bull); } .quote span.down { color: var(--bear); }
 .quote small { grid-column: 1 / -1; color: var(--muted); font-size: 11.5px; }
 .linkish { border: 0; background: transparent; color: var(--accent); font-size: 12px; padding: 0; cursor: pointer; text-decoration: underline; }
+.acct { display: flex; align-items: center; gap: 8px; }
+.signin { padding: 16px; display: grid; gap: 10px; max-width: 520px; }
+.signin form { display: flex; flex-wrap: wrap; gap: 8px; }
+.signin input { flex: 1 1 220px; min-width: 0; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-size: 15px; }
+.lock { color: var(--accent); font-weight: 600; }
 .find { position: relative; flex: 1 1 200px; max-width: 300px; min-width: 0; }
 .find input { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; }
 .find-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; box-shadow: 0 18px 40px -18px rgba(13, 20, 36, 0.45); max-height: 340px; overflow-y: auto; z-index: 8; }
@@ -186,6 +191,7 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
     <div class="quote" id="quote" hidden><b class="num" id="q-price"></b><span class="num" id="q-chg"></span><small id="q-sub"></small></div>
     <div class="find"><input id="find" type="search" placeholder="Search ticker or company" autocomplete="off" aria-label="Search companies" aria-controls="find-list"><div class="find-list" id="find-list" role="listbox" hidden></div></div>
     <nav class="nav" aria-label="Sections"><a href="#kpis">KPIs</a><a href="#valuation">Valuation</a><a href="#watchlist">Watchlist</a></nav>
+    <div class="acct" id="acct" hidden><span id="acct-plan" class="pill wait"></span><button class="btn ghost small" id="acct-btn" type="button"></button></div>
     <div class="price-box">
       <label for="price">Price used in the model<br><span id="price-note"></span> <button class="linkish" id="price-reset" type="button" hidden>use last price</button></label>
       <div class="in"><span class="num muted" id="cur-sym">$</span><input id="price" type="number" min="1" step="0.01" inputmode="decimal"></div>
@@ -194,6 +200,12 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
 </header>
 
 <main class="wrap">
+  <div class="card signin" id="signin" hidden>
+    <b>Sign in to BuyBelow</b>
+    <span class="muted">Enter your email and we'll send a link. No password.</span>
+    <form id="signin-form" novalidate><input id="signin-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email"><button class="btn" type="submit">Email me a sign-in link</button></form>
+    <p class="note" id="signin-note" role="status"></p>
+  </div>
   <div class="card notice" id="none-banner" hidden></div>
   <section id="kpis">
     <div class="sec-head">
@@ -757,12 +769,51 @@ $("alert-rule").addEventListener("change", renderVal);
 $("alert-custom").addEventListener("input", renderVal);
 
 /* ---------- Watchlist: kept in your account where available, otherwise in this browser ---------- */
+/* When this page is served at /app it talks to the BuyBelow server: accounts, plan limits, saved watchlists.
+   Anywhere else (the private preview) it keeps working on its own. */
+const APP = location.pathname.startsWith("/app");
+const account = { signedIn: false, plan: "free", email: "", free: new Set(), limit: 2 };
+const locked = (t) => APP && account.plan !== "premium" && !account.free.has(t);
+async function loadAccount() {
+  try {
+    const j = await (await fetch("/api/me")).json();
+    Object.assign(account, { signedIn: !!j.signedIn, plan: j.plan || "free", email: j.email || "", free: new Set(j.freeTickers || []), limit: j.signedIn ? j.watchlistLimit : j.freeWatchlistLimit });
+  } catch { /* stays signed out */ }
+  $("acct").hidden = false;
+  $("acct-plan").textContent = account.plan === "premium" ? "Premium" : "Free plan"; $("acct-plan").className = "pill " + (account.plan === "premium" ? "go" : "wait");
+  $("acct-btn").textContent = account.signedIn ? "Sign out" : "Sign in"; $("acct-btn").title = account.email;
+}
+function showSignin(msg) { const box = $("signin"); box.hidden = false; $("signin-note").className = "note"; $("signin-note").textContent = msg || ""; box.scrollIntoView({ block: "center" }); $("signin-email").focus(); }
+$("acct-btn").addEventListener("click", async () => {
+  if (!account.signedIn) { showSignin(); return; }
+  await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+  location.reload();
+});
+$("signin-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const note = $("signin-note"), email = $("signin-email").value.trim();
+  note.className = "note"; note.textContent = "Sending…";
+  try {
+    const r = await fetch("/api/auth/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) }), j = await r.json();
+    if (!r.ok) { note.textContent = j.error || "That didn't work. Try again."; return; }
+    note.className = "note ok"; note.textContent = "Check your email for the sign-in link. It works once, for 15 minutes.";
+    if (j.dev_link) { const a = H("a", "", " Development link"); a.href = j.dev_link; note.append(a); }
+  } catch { note.textContent = "That didn't go through. Check your connection."; }
+});
 const store = { items: {}, col: null, cloud: false };
 const priceOf = (t) => prices[t] ?? lastPrice(t) ?? (store.items[t] ? store.items[t].priceAtSave : placeholder(t));
 const LS = "iq_watchlist";
-function loadLocal() { try { store.items = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch { store.items = {}; } }
-function saveLocal() { try { localStorage.setItem(LS, JSON.stringify(store.items)); } catch {} }
+function loadLocal() { if (APP) return; try { store.items = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch { store.items = {}; } }
+function saveLocal() { if (APP) return; try { localStorage.setItem(LS, JSON.stringify(store.items)); } catch {} }
 async function connectStore() {
+  if (APP) {
+    store.items = {}; store.cloud = account.signedIn;
+    if (account.signedIn) {
+      try { const j = await (await fetch("/api/watchlist")).json(); (j.items || []).forEach((it) => { if (it.data && it.data.ticker) store.items[it.data.ticker] = it.data; }); } catch { /* shown as empty */ }
+    }
+    if (D) renderWatch();
+    return;
+  }
   try {
     if (!window.claude || !window.claude.use) return;
     const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
@@ -777,10 +828,20 @@ async function connectStore() {
   } catch { /* stays local */ }
 }
 async function persist(item) {
+  if (APP) {
+    if (!account.signedIn) { showSignin("Sign in to save this to your watchlist."); return { error: "Sign in to save this to your watchlist." }; }
+    item.thesis = (item.thesis || "").slice(0, 1500); item.history = (item.history || []).slice(0, 6);
+    try {
+      const r = await fetch("/api/watchlist/" + encodeURIComponent(item.ticker), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ buy_below: item.alertPrice, data: item }) });
+      if (!r.ok) return { error: (await r.json()).error || "Could not save. Try again." };
+    } catch { return { error: "Could not save. Check your connection." }; }
+    store.items[item.ticker] = item; return {};
+  }
   store.items[item.ticker] = item; saveLocal();
   if (store.col) { try { await store.col.doc(item.ticker).set(item); } catch { store.cloud = false; } }
 }
 async function removeItem(t) {
+  if (APP) { try { await fetch("/api/watchlist/" + encodeURIComponent(t), { method: "DELETE" }); } catch {} delete store.items[t]; renderWatch(); return; }
   delete store.items[t]; saveLocal();
   if (store.col) { try { await store.col.doc(t).delete(); } catch {} }
   renderWatch();
@@ -798,13 +859,14 @@ $("save").addEventListener("click", async () => {
     rule, custom: rule === "custom" ? custom : null, alertPrice: +trigger(rule, vals, model, custom).toFixed(2), thesis: $("thesis").value.trim(),
     history: (prev ? [{ savedAt: prev.savedAt, base: prev.values.base.iv, alertPrice: prev.alertPrice }].concat(prev.history || []) : []).slice(0, 12),
   };
-  await persist(item);
+  const saved = await persist(item);
+  if (saved && saved.error) { $("save-note").className = "note"; $("save-note").textContent = saved.error; return; }
   $("save-note").className = "note ok"; $("save-note").textContent = `Saved. Buy below ${usd(item.alertPrice)}: you'll be emailed when it gets there.`;
   renderWatch();
 });
 
 function renderWatch() {
-  $("store-note").textContent = store.cloud ? "Saved to your account, so it is here on any device." : "Saved in this browser.";
+  $("store-note").textContent = APP ? (account.signedIn ? (account.plan === "premium" ? "Saved to your account." : `Saved to your account. The free plan holds ${account.limit} stocks.`) : "Sign in to save your watchlist.") : store.cloud ? "Saved to your account, so it is here on any device." : "Saved in this browser.";
   const wl = $("wl"), items = Object.values(store.items).sort((a, b) => (a.ticker > b.ticker ? 1 : -1));
   wl.replaceChildren();
   if (!items.length) {
@@ -945,6 +1007,14 @@ function loadCompany(t) {
 }
 async function ensure(t) {
   if (DATA[t]) return true;
+  if (APP) {
+    try {
+      const r = await fetch("/api/company/" + encodeURIComponent(t));
+      if (r.status === 402) return "locked";
+      if (!r.ok) return false;
+      DATA[t] = await r.json(); return true;
+    } catch { return false; }
+  }
   const row = INDEX.find((r) => r[0] === t);
   if (!row) return false;
   const id = String(row[2]).padStart(3, "0");
@@ -959,7 +1029,13 @@ async function openCompany(t) {
     box.scrollIntoView({ block: "center" }); return;
   }
   $("co-sub").textContent = `Loading ${t}…`;
-  if (await ensure(t)) loadCompany(t);
+  const got = locked(t) ? "locked" : await ensure(t);
+  if (got === "locked") {
+    const box = $("none-banner"); box.hidden = false;
+    box.replaceChildren(H("b", "", `${row ? row[1] : t} is part of Premium. `), document.createTextNode(`The free plan covers ${[...account.free].join(", ")}. Premium opens every NYSE and Nasdaq company and an unlimited watchlist.`));
+    if (D) $("co-sub").textContent = `${D.ticker} · ${D.exchange || "US"}`; box.scrollIntoView({ block: "center" }); return;
+  }
+  if (got) loadCompany(t);
   else $("co-sub").textContent = `Couldn't load ${t}. Check your connection and try again.`;
 }
 /* Company search over the index (largest companies first). */
@@ -975,7 +1051,7 @@ function runFind() {
   if (!findHits.length) findList.append(H("p", "", INDEX.length ? "No company matches. Foreign filers and funds are not covered yet." : "Company list not loaded."));
   findHits.forEach((r, i) => {
     const b = H("button", i === 0 ? "on" : ""); b.type = "button"; b.setAttribute("role", "option");
-    b.append(H("b", "", r[0]), H("span", "", r[1]), H("small", "", r[2] < 0 ? "no financials" : r[3]));
+    b.append(H("b", "", r[0]), H("span", "", r[1]), H("small", locked(r[0]) ? "lock" : "", r[2] < 0 ? "no financials" : locked(r[0]) ? "Premium" : r[3]));
     b.addEventListener("pointerdown", (e) => { e.preventDefault(); pick(r[0]); });
     findList.append(b);
   });
@@ -992,14 +1068,15 @@ find.addEventListener("keydown", (e) => {
 (async function boot() {
   loadLocal();
   $("co-name").textContent = "Loading companies…";
-  try { const r = await fetch("data/index.json"); if (!r.ok) throw new Error(r.status); const j = await r.json(); INDEX = j.companies; INDEX.forEach((row) => { row[1] = cleanName(row[1]); }); $("foot").textContent = `BuyBelow tester covering ${INDEX.length.toLocaleString()} NYSE and Nasdaq listings (${INDEX.filter((r) => r[2] >= 0).length.toLocaleString()} with financials), built ${fmtDate(j.built)}. Financials: SEC EDGAR XBRL company facts (10-K and 10-Q filings). Share prices are typed values, not live quotes. Research tool, not investment advice. Company names are trademarks of their owners; BuyBelow is not affiliated with them.`; }
+  if (APP) { await loadAccount(); if (new URLSearchParams(location.search).get("signin") === "expired") showSignin("That sign-in link has expired or was already used. Ask for a new one."); }
+  try { const r = await fetch(APP ? "/data/index.json" : "data/index.json"); if (!r.ok) throw new Error(r.status); const j = await r.json(); INDEX = j.companies; INDEX.forEach((row) => { row[1] = cleanName(row[1]); }); $("foot").textContent = `BuyBelow covers ${INDEX.length.toLocaleString()} NYSE and Nasdaq listings (${INDEX.filter((r) => r[2] >= 0).length.toLocaleString()} with financials), built ${fmtDate(j.built)}. Financials: SEC EDGAR XBRL company facts (10-K and 10-Q filings). Share prices are typed values, not live quotes. Research tool, not investment advice. Company names are trademarks of their owners; BuyBelow is not affiliated with them.`; }
   catch { $("co-name").textContent = "Couldn't load the company list"; $("co-sub").textContent = "Reload the page to try again."; return; }
-  try { const r = await fetch("data/prices.json"); if (r.ok) PX = await r.json(); } catch { /* the page works without quotes */ }
-  try { const r = await fetch("data/fx.json"); if (r.ok) FX = await r.json(); } catch { /* foreign filers stay in their own currency */ }
+  try { const r = await fetch(APP ? "/data/prices.json" : "data/prices.json"); if (r.ok) PX = await r.json(); } catch { /* the page works without quotes */ }
+  try { const r = await fetch(APP ? "/data/fx.json" : "data/fx.json"); if (r.ok) FX = await r.json(); } catch { /* foreign filers stay in their own currency */ }
   if (PX.asOf) $("foot").textContent = $("foot").textContent.replace("Share prices are typed values, not live quotes.", `Share prices are a snapshot of ${pxDate()}, not a live feed.`);
   if (FX.asOf) { const f = $("foot"), a = document.createElement("a"); a.href = "https://www.exchangerate-api.com"; a.rel = "noopener"; a.textContent = "Rates By Exchange Rate API"; f.append(" Currency conversion: ", a, "."); }
   find.placeholder = `Search ${INDEX.length.toLocaleString()} companies`;
-  const want = [state.ticker, "ADBE", INDEX[0] && INDEX[0][0]].find((t) => t && INDEX.some((r) => r[0] === t && r[2] >= 0));
+  const want = [state.ticker, APP ? "AAPL" : "ADBE", INDEX[0] && INDEX[0][0]].find((t) => t && !locked(t) && INDEX.some((r) => r[0] === t && r[2] >= 0));
   await openCompany(want); connectStore();
 })();
 const redraw = () => { if (D) { if (METRICS.length) drawKpi(); renderVal(); renderWatch(); } };

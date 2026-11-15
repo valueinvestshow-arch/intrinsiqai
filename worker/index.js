@@ -3,6 +3,7 @@ import * as waitlist from "./api/waitlist.js";
 import * as exporter from "./api/export.js";
 import * as auth from "./api/auth.js";
 import * as watch from "./api/watchlist.js";
+import * as company from "./api/company.js";
 import { json } from "./lib.js";
 
 const notAllowed = () => json({ error: "Method not allowed." }, 405);
@@ -27,6 +28,9 @@ export default {
         if (method === "DELETE") return watch.remove(ctx, ticker);
         return notAllowed();
       }
+      // Company data, gated by plan
+      if (pathname.startsWith("/api/company/")) return method === "GET" ? company.get(ctx, decodeURIComponent(pathname.slice("/api/company/".length))) : notAllowed();
+      if (pathname.startsWith("/data/s/")) return json({ error: "Not found." }, 404);   // only readable through /api/company
       if (pathname.startsWith("/api/")) return json({ error: "Not found." }, 404);
     } catch {
       return json({ error: "Something went wrong. Try again." }, 500);

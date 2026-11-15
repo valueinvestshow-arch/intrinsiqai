@@ -7,7 +7,7 @@ compatibility_date = "2026-11-01"
 [assets]
 directory = "./site"
 binding = "ASSETS"
-run_worker_first = ["/api/*"]
+run_worker_first = ["/api/*", "/data/s/*"]
 
 # The sign-up list: a D1 database held in Cloudflare's EU jurisdiction.
 [[d1_databases]]
