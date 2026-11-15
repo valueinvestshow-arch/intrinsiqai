@@ -3,14 +3,15 @@
 Value a stock under bear, base and bull cases, keep every valuation next to the live price, and get an email when the price reaches the number you set.
 
 ```
-site/                          the pre-launch website (Cloudflare Pages output directory)
+site/                          the pre-launch website (static files)
   index.html                   landing page, built from src/landing.src.html
   privacy.html                 privacy policy
   admin.html                   private dashboard for the sign-up list
   _headers                     security headers
   fonts/                       self-hosted DM Sans and Caveat, with their licence
-functions/api/waitlist.js      saves a sign-up (POST /api/waitlist)
-functions/api/export.js        feeds the admin page (GET /api/export, needs the admin token)
+worker/index.js                routes /api/* and serves site/
+worker/api/waitlist.js         saves a sign-up (POST /api/waitlist)
+worker/api/export.js           feeds the admin page (GET /api/export, needs the admin token)
 db/schema.sql                  run once to create the sign-up table
 src/landing.src.html           landing page source; edit this, then run tools/build_landing.py
 src/tester.src.html            the product prototype (KPI charts, three-case valuation, watchlist)
@@ -19,15 +20,15 @@ tools/                         data builders (see "Data" below) and build_landin
 data/adbe.json, aapl.json      sample company data files
 ```
 
-## Put the landing page live (Cloudflare, free plan)
+## How it is deployed (Cloudflare Workers, free plan)
 
-1. **Database.** Cloudflare dashboard → Storage & Databases → D1 → Create database. Name it `intrinsiqai-waitlist`. Under data location choose **Specify jurisdiction → European Union** (this can only be set at creation). Open it → Console → paste all of `db/schema.sql` → Execute.
-2. **Site.** Workers & Pages → Create → Pages → Connect to Git → choose this repository. Framework preset **None**, build command **empty**, build output directory **site**. Save and Deploy.
-3. **Connect the database.** Pages project → Settings → Bindings → Add → D1 database. Variable name `DB`, database `intrinsiqai-waitlist`.
-4. **Admin token.** Settings → Variables and Secrets → Add. Type **Secret**, name `ADMIN_TOKEN`, value a long random password. Keep it in a password manager.
-5. **Redeploy** (Deployments → latest → Retry deployment) so the binding and secret take effect.
-6. **Test.** Sign up with your own email on the live site, then open `/admin`, paste the token, and check you see one sign-up.
-7. **Domain.** Pages project → Custom domains.
+The site is a Cloudflare Worker with static assets: `wrangler.toml` serves everything in `site/` and routes `/api/*` to `worker/index.js`. Cloudflare's Git integration builds on every push to `main` with the deploy command `npx wrangler deploy`.
+
+- Database: D1 `buybelow-waitlist`, EU jurisdiction, bound as `DB` in `wrangler.toml`. The table comes from `db/schema.sql`.
+- Admin password: a secret named `ADMIN_TOKEN`, set in the dashboard (Worker -> Settings -> Variables and Secrets). Never in the repository.
+- Domain: buybelow.io, added under the Worker's Domains & Routes.
+
+Run it locally with `npx wrangler dev` (put `ADMIN_TOKEN=...` in a `.dev.vars` file, which is git-ignored).
 
 What the sign-up function does: accepts sign-ups only from the site's own pages, requires the consent tick, stores the exact consent wording and time, never stores an IP address, gives the same answer for a repeat sign-up (so it never reveals who is listed), and silently drops submissions that fill the hidden spam-trap field.
 

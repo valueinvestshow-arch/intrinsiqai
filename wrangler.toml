@@ -1,10 +1,18 @@
-# Cloudflare Pages configuration for buybelow.io
+# Cloudflare Worker for buybelow.io: static pages from site/ plus the sign-up API.
+# Deployed by Cloudflare's Git integration with:  npx wrangler deploy
 name = "buybelow"
-pages_build_output_dir = "site"
+main = "worker/index.js"
 compatibility_date = "2026-11-01"
+
+[assets]
+directory = "./site"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
 
 # The sign-up list: a D1 database held in Cloudflare's EU jurisdiction.
 [[d1_databases]]
 binding = "DB"
 database_name = "buybelow-waitlist"
 database_id = "6b20f0ab-7892-47b4-8cfe-5d29b803f67d"
+
+# ADMIN_TOKEN is a secret set in the dashboard (Settings -> Variables and Secrets), never in this file.
