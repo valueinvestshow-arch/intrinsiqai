@@ -824,7 +824,7 @@ $("signin-form").addEventListener("submit", async (e) => {
     const r = await fetch("/api/auth/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) }), j = await r.json();
     if (!r.ok) { note.textContent = j.error || "That didn't work. Try again."; return; }
     note.className = "note ok"; note.textContent = "Check your email for the sign-in link. It works once, for 15 minutes.";
-    if (j.dev_link) { const a = H("a", "", " Development link"); a.href = j.dev_link; note.append(a); }
+    if (j.dev_link) { note.textContent = "Running on your computer, so no email is sent. "; const a = H("a", "", "Click here to sign in."); a.href = j.dev_link; note.append(a); }
   } catch { note.textContent = "That didn't go through. Check your connection."; }
 });
 const store = { items: {}, col: null, cloud: false };

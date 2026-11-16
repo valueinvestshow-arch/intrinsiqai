@@ -36,7 +36,35 @@ Sign-in emails need a `RESEND_API_KEY` secret; until it is set, `/api/auth/reque
 
 Plans: there is no free tier. An account without a subscription can sign in but opens no company and saves nothing; a subscribed account (`plan = premium`) has everything. The rule is `isSubscribed` in `worker/lib.js`.
 
-Run it locally with `npx wrangler dev` (put `ADMIN_TOKEN=...` in a `.dev.vars` file, which is git-ignored).
+## Run it on your own computer
+
+Everything runs locally with a private database: no email service, no payments, nothing public. You need [Node.js](https://nodejs.org) (the LTS version) and Git.
+
+```bash
+git clone https://github.com/valueinvestshow-arch/intrinsiqai.git
+```
+
+```bash
+cd intrinsiqai
+```
+
+```bash
+npm install
+```
+
+```bash
+npm run setup
+```
+
+```bash
+npm run dev
+```
+
+Then open http://localhost:8787/app and sign in with any email: the page shows a "Click here to sign in" link instead of sending one, and local accounts start subscribed. The landing page is at http://localhost:8787 and the waitlist page at http://localhost:8787/admin (password `local-admin`).
+
+For real share prices, paste your Twelve Data key after `TWELVEDATA_API_KEY=` in the `.dev.vars` file and restart `npm run dev`. That file never leaves your computer.
+
+Stop the app with Ctrl+C. To pick up new changes later: `git pull`, then `npm run dev` again. To wipe the local database and start over, delete the `.wrangler` folder and run `npm run setup`.
 
 What the sign-up function does: accepts sign-ups only from the site's own pages, requires the consent tick, stores the exact consent wording and time, never stores an IP address, gives the same answer for a repeat sign-up (so it never reveals who is listed), and silently drops submissions that fill the hidden spam-trap field.
 
