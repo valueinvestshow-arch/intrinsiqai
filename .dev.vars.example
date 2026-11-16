@@ -1,0 +1,14 @@
+# Settings for running BuyBelow on your own computer. "npm run setup" copies this file to .dev.vars.
+# .dev.vars stays on your machine: it is git-ignored and never deployed.
+
+# Show the sign-in link on the page instead of emailing it (no email service needed).
+DEV_ECHO_LOGIN_LINK=1
+
+# New local accounts start subscribed, so you can use the whole app without paying.
+DEV_AUTO_SUBSCRIBE=1
+
+# Password for the waitlist page at /admin on your computer.
+ADMIN_TOKEN=local-admin
+
+# Optional: your Twelve Data key, for real share prices. Without it, prices are placeholders you can type over.
+TWELVEDATA_API_KEY=

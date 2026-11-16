@@ -54,7 +54,9 @@ export async function verify({ request, env }) {
   // Claim the token in one statement so it cannot be used twice.
   const claimed = await env.DB.prepare("UPDATE login_tokens SET used_at = ?1 WHERE token_hash = ?2 AND used_at IS NULL AND expires_at > ?1 RETURNING email").bind(now, hash).first();
   if (!claimed) return fail();
-  await env.DB.prepare("INSERT OR IGNORE INTO users (id, email) VALUES (?1, ?2)").bind(randomToken(12), claimed.email).run();
+  // Local development only (.dev.vars): new accounts start subscribed, so the whole app can be tried without payments.
+  const plan = env.DEV_ECHO_LOGIN_LINK === "1" && env.DEV_AUTO_SUBSCRIBE === "1" ? "premium" : "free";
+  await env.DB.prepare("INSERT OR IGNORE INTO users (id, email, plan) VALUES (?1, ?2, ?3)").bind(randomToken(12), claimed.email, plan).run();
   const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?1").bind(claimed.email).first();
   const session = await createSession(env, user.id);
   return new Response(null, { status: 302, headers: { Location: `${url.origin}/app`, "Set-Cookie": sessionCookie(session), "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });

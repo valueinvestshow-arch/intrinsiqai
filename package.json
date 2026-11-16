@@ -1,0 +1,13 @@
+{
+  "name": "buybelow",
+  "private": true,
+  "description": "BuyBelow: the site, the app and its API, as one Cloudflare Worker.",
+  "scripts": {
+    "setup": "node tools/local-setup.mjs",
+    "dev": "wrangler dev --port 8787",
+    "build": "python3 tools/build_landing.py && python3 tools/build_app.py"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
