@@ -54,7 +54,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .signin { padding: 16px; display: grid; gap: 10px; max-width: 520px; }
 .signin form { display: flex; flex-wrap: wrap; gap: 8px; }
 .signin input { flex: 1 1 220px; min-width: 0; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-size: 15px; }
-.lock { color: var(--accent); font-weight: 600; }
+.paywall { padding: 32px 24px; display: grid; gap: 14px; justify-items: center; text-align: center; max-width: 620px; margin: 24px auto; }
+.paywall h2 { font-size: 30px; font-weight: 800; }
+.paywall-prices { display: flex; gap: 28px; } .paywall-prices b { font-size: 32px; font-weight: 800; display: block; line-height: 1.1; } .paywall-prices span { color: var(--muted); font-size: 14px; }
+.paywall-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+body.walled main > section, body.walled .find, body.walled .nav, body.walled .price-box, body.walled .co { display: none; }
 .find { position: relative; flex: 1 1 200px; max-width: 300px; min-width: 0; }
 .find input { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; }
 .find-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; box-shadow: 0 18px 40px -18px rgba(13, 20, 36, 0.45); max-height: 340px; overflow-y: auto; z-index: 8; }
@@ -216,6 +220,12 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
     <span class="muted">Enter your email and we'll send a link. No password.</span>
     <form id="signin-form" novalidate><input id="signin-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email"><button class="btn" type="submit">Email me a sign-in link</button></form>
     <p class="note" id="signin-note" role="status"></p>
+  </div>
+  <div class="card paywall" id="paywall" hidden>
+    <h2>BuyBelow is for subscribers</h2>
+    <p class="muted" id="paywall-text"></p>
+    <div class="paywall-prices"><div><b>$9.99</b><span>a month</span></div><div><b>$90</b><span>a year</span></div></div>
+    <div class="paywall-actions"><a class="btn" href="/#join">Join the waitlist</a><button class="btn ghost" id="paywall-signin" type="button">Sign in</button></div>
   </div>
   <div class="card notice" id="none-banner" hidden></div>
   <section id="kpis">
@@ -783,17 +793,23 @@ $("alert-custom").addEventListener("input", renderVal);
 /* When this page is served at /app it talks to the BuyBelow server: accounts, plan limits, saved watchlists.
    Anywhere else (the private preview) it keeps working on its own. */
 const APP = location.pathname.startsWith("/app");
-const account = { signedIn: false, plan: "free", email: "", free: new Set(), limit: 2 };
-const locked = (t) => APP && account.plan !== "premium" && !account.free.has(t);
+const account = { signedIn: false, subscribed: false, email: "" };
+const locked = () => APP && !account.subscribed;
 async function loadAccount() {
   try {
     const j = await (await fetch("/api/me")).json();
-    Object.assign(account, { signedIn: !!j.signedIn, plan: j.plan || "free", email: j.email || "", free: new Set(j.freeTickers || []), limit: j.signedIn ? j.watchlistLimit : j.freeWatchlistLimit });
+    Object.assign(account, { signedIn: !!j.signedIn, subscribed: !!j.subscribed, email: j.email || "" });
   } catch { /* stays signed out */ }
   $("acct").hidden = false;
-  $("acct-plan").textContent = account.plan === "premium" ? "Premium" : "Free plan"; $("acct-plan").className = "pill " + (account.plan === "premium" ? "go" : "wait");
+  $("acct-plan").hidden = !account.signedIn; $("acct-plan").textContent = account.subscribed ? "Subscribed" : "No subscription"; $("acct-plan").className = "pill " + (account.subscribed ? "go" : "wait");
   $("acct-btn").textContent = account.signedIn ? "Sign out" : "Sign in"; $("acct-btn").title = account.email;
 }
+function showPaywall() {
+  document.body.classList.add("walled"); $("paywall").hidden = false;
+  $("paywall-text").textContent = account.signedIn ? `You're signed in as ${account.email}, without a subscription. Subscriptions open at launch; join the waitlist to hear the day they do.` : "Every NYSE and Nasdaq company, three-case valuations, your watchlist and buy-price emails. Subscriptions open at launch.";
+  $("paywall-signin").hidden = account.signedIn;
+}
+$("paywall-signin").addEventListener("click", () => showSignin());
 function showSignin(msg) { const box = $("signin"); box.hidden = false; $("signin-note").className = "note"; $("signin-note").textContent = msg || ""; box.scrollIntoView({ block: "center" }); $("signin-email").focus(); }
 $("acct-btn").addEventListener("click", async () => {
   if (!account.signedIn) { showSignin(); return; }
@@ -818,8 +834,8 @@ function loadLocal() { if (APP) return; try { store.items = JSON.parse(localStor
 function saveLocal() { if (APP) return; try { localStorage.setItem(LS, JSON.stringify(store.items)); } catch {} }
 async function connectStore() {
   if (APP) {
-    store.items = {}; store.cloud = account.signedIn;
-    if (account.signedIn) {
+    store.items = {}; store.cloud = account.subscribed;
+    if (account.subscribed) {
       try { const j = await (await fetch("/api/watchlist")).json(); (j.items || []).forEach((it) => { if (it.data && it.data.ticker) store.items[it.data.ticker] = it.data; }); } catch { /* shown as empty */ }
     }
     if (D) renderWatch();
@@ -877,7 +893,7 @@ $("save").addEventListener("click", async () => {
 });
 
 function renderWatch() {
-  $("store-note").textContent = APP ? (account.signedIn ? (account.plan === "premium" ? "Saved to your account." : `Saved to your account. The free plan holds ${account.limit} stocks.`) : "Sign in to save your watchlist.") : store.cloud ? "Saved to your account, so it is here on any device." : "Saved in this browser.";
+  $("store-note").textContent = APP ? "Saved to your account." : store.cloud ? "Saved to your account, so it is here on any device." : "Saved in this browser.";
   const wl = $("wl"), items = Object.values(store.items).sort((a, b) => (a.ticker > b.ticker ? 1 : -1));
   wl.replaceChildren();
   if (!items.length) {
@@ -1021,7 +1037,7 @@ async function ensure(t) {
   if (APP) {
     try {
       const r = await fetch("/api/company/" + encodeURIComponent(t));
-      if (r.status === 402) return "locked";
+      if (r.status === 402 || r.status === 401) return "locked";
       if (!r.ok) return false;
       DATA[t] = await r.json(); return true;
     } catch { return false; }
@@ -1043,8 +1059,7 @@ async function openCompany(t) {
   const got = locked(t) ? "locked" : await ensure(t);
   if (got === "locked") {
     const box = $("none-banner"); box.hidden = false;
-    box.replaceChildren(H("b", "", `${row ? row[1] : t} is part of Premium. `), document.createTextNode(`The free plan covers ${[...account.free].join(", ")}. Premium opens every NYSE and Nasdaq company and an unlimited watchlist.`));
-    if (D) $("co-sub").textContent = `${D.ticker} · ${D.exchange || "US"}`; box.scrollIntoView({ block: "center" }); return;
+    showPaywall(); return;
   }
   if (got) loadCompany(t);
   else $("co-sub").textContent = `Couldn't load ${t}. Check your connection and try again.`;
@@ -1062,7 +1077,7 @@ function runFind() {
   if (!findHits.length) findList.append(H("p", "", INDEX.length ? "No company matches. Foreign filers and funds are not covered yet." : "Company list not loaded."));
   findHits.forEach((r, i) => {
     const b = H("button", i === 0 ? "on" : ""); b.type = "button"; b.setAttribute("role", "option");
-    b.append(H("b", "", r[0]), H("span", "", r[1]), H("small", locked(r[0]) ? "lock" : "", r[2] < 0 ? "no financials" : locked(r[0]) ? "Premium" : r[3]));
+    b.append(H("b", "", r[0]), H("span", "", r[1]), H("small", "", r[2] < 0 ? "no financials" : r[3]));
     b.addEventListener("pointerdown", (e) => { e.preventDefault(); pick(r[0]); });
     findList.append(b);
   });
@@ -1087,7 +1102,8 @@ find.addEventListener("keydown", (e) => {
   if (PX.asOf) $("foot").textContent = $("foot").textContent.replace("Share prices are typed values, not live quotes.", `Share prices are a snapshot of ${pxDate()}, not a live feed.`);
   if (FX.asOf) { const f = $("foot"), a = document.createElement("a"); a.href = "https://www.exchangerate-api.com"; a.rel = "noopener"; a.textContent = "Rates By Exchange Rate API"; f.append(" Currency conversion: ", a, "."); }
   find.placeholder = `Search ${INDEX.length.toLocaleString()} companies`;
-  const want = [state.ticker, APP ? "AAPL" : "ADBE", INDEX[0] && INDEX[0][0]].find((t) => t && !locked(t) && INDEX.some((r) => r[0] === t && r[2] >= 0));
+  if (locked()) { showPaywall(); return; }
+  const want = [state.ticker, "ADBE", INDEX[0] && INDEX[0][0]].find((t) => t && INDEX.some((r) => r[0] === t && r[2] >= 0));
   await openCompany(want); connectStore();
 })();
 const redraw = () => { if (D) { if (METRICS.length) drawKpi(); renderVal(); renderWatch(); } };

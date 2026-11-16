@@ -30,10 +30,9 @@ export async function sha256(text) {
 export const isoIn = (ms) => new Date(Date.now() + ms).toISOString();
 
 // ---- Plans ----
-// Free: the seven largest US technology companies, and two stocks on the watchlist. Premium: everything.
-export const FREE_TICKERS = new Set(["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA"]);
-export const FREE_WATCHLIST_LIMIT = 2;
-export const canOpen = (plan, ticker) => plan === "premium" || FREE_TICKERS.has(ticker);
+// BuyBelow is a paid product with no free tier. An account is either subscribed ("premium") or not ("free",
+// which here means "no subscription yet": it can sign in, but opens no company and saves nothing).
+export const isSubscribed = (user) => !!user && user.plan === "premium";
 
 // ---- Sessions ----
 export const SESSION_COOKIE = "__Host-bb_session";

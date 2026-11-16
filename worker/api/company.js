@@ -1,6 +1,6 @@
-// GET /api/company/:ticker — one company's financial data, if the visitor's plan covers it.
+// GET /api/company/:ticker — one company's financial data, for subscribers.
 // The data files under /data/s/ are never served directly; this is the only way to read them.
-import { json, currentUser, canOpen } from "../lib.js";
+import { json, currentUser, isSubscribed } from "../lib.js";
 
 const TICKER = /^[A-Z0-9][A-Z0-9.\-]{0,11}$/;
 let shardByTicker = null;   // ticker -> shard number, loaded once per Worker instance
@@ -12,8 +12,9 @@ async function asset(env, request, path) {
 export async function get({ request, env }, ticker) {
   ticker = String(ticker || "").toUpperCase();
   if (!TICKER.test(ticker)) return json({ error: "Unknown ticker." }, 400);
-  const user = await currentUser(request, env), plan = user ? user.plan : "free";
-  if (!canOpen(plan, ticker)) return json({ error: "That company is part of Premium.", upgrade: true, signedIn: !!user }, 402);
+  const user = await currentUser(request, env);
+  if (!user) return json({ error: "Sign in first." }, 401);
+  if (!isSubscribed(user)) return json({ error: "BuyBelow needs a subscription.", subscribe: true }, 402);
 
   if (!shardByTicker) {
     const res = await asset(env, request, "/data/index.json");

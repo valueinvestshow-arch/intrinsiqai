@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS users (
   id         TEXT PRIMARY KEY,                                   -- random id, never the email
   email      TEXT NOT NULL UNIQUE CHECK (length(email) <= 254),
-  plan       TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'premium')),
+  plan       TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'premium')),   -- 'free' = no subscription yet; 'premium' = subscribed
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 

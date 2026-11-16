@@ -2,8 +2,8 @@
 //   POST /api/auth/request  {email}   -> emails a one-time link (valid 15 minutes)
 //   GET  /api/auth/verify?token=...   -> signs the browser in and redirects to /app
 //   POST /api/auth/logout
-//   GET  /api/me                      -> who is signed in, their plan and limits
-import { json, sameSite, readJson, randomToken, sha256, isoIn, createSession, currentUser, endSession, sessionCookie, FREE_TICKERS, FREE_WATCHLIST_LIMIT } from "../lib.js";
+//   GET  /api/me                      -> who is signed in, and whether they are subscribed
+import { json, sameSite, readJson, randomToken, sha256, isoIn, createSession, currentUser, endSession, sessionCookie, isSubscribed } from "../lib.js";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const LINK_MINUTES = 15;
@@ -68,6 +68,6 @@ export async function logout({ request, env }) {
 
 export async function me({ request, env }) {
   const user = await currentUser(request, env);
-  if (!user) return json({ signedIn: false, freeTickers: [...FREE_TICKERS], freeWatchlistLimit: FREE_WATCHLIST_LIMIT });
-  return json({ signedIn: true, email: user.email, plan: user.plan, freeTickers: [...FREE_TICKERS], watchlistLimit: user.plan === "premium" ? null : FREE_WATCHLIST_LIMIT });
+  if (!user) return json({ signedIn: false, subscribed: false });
+  return json({ signedIn: true, email: user.email, subscribed: isSubscribed(user) });
 }

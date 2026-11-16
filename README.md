@@ -34,7 +34,7 @@ The site is a Cloudflare Worker with static assets: `wrangler.toml` serves every
 
 Sign-in emails need a `RESEND_API_KEY` secret; until it is set, `/api/auth/request` answers that sign-in is not open yet.
 
-Plans: free accounts can open seven companies (AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA) and keep two on the watchlist; premium has no limits. The rules live in `worker/lib.js`.
+Plans: there is no free tier. An account without a subscription can sign in but opens no company and saves nothing; a subscribed account (`plan = premium`) has everything. The rule is `isSubscribed` in `worker/lib.js`.
 
 Run it locally with `npx wrangler dev` (put `ADMIN_TOKEN=...` in a `.dev.vars` file, which is git-ignored).
 
