@@ -70,6 +70,8 @@ export async function logout({ request, env }) {
 
 export async function me({ request, env }) {
   const user = await currentUser(request, env);
-  if (!user) return json({ signedIn: false, subscribed: false });
-  return json({ signedIn: true, email: user.email, subscribed: isSubscribed(user) });
+  // Which ways of signing in are switched on, so the page only offers ones that work.
+  const ways = { google: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), emailLink: !!env.RESEND_API_KEY || env.DEV_ECHO_LOGIN_LINK === "1" };
+  if (!user) return json({ signedIn: false, subscribed: false, ways });
+  return json({ signedIn: true, email: user.email, subscribed: isSubscribed(user), ways });
 }

@@ -44,6 +44,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .acct { display: flex; align-items: center; gap: 8px; }
 .signin { padding: 16px; display: grid; gap: 10px; max-width: 520px; }
 .signin form { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.gbtn { background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(38, 38, 38, 0.1); justify-self: start; text-decoration: none; }
 .signin input { flex: 1 1 220px; min-width: 0; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-size: 15px; }
 .paywall { padding: 32px 24px; display: grid; gap: 14px; justify-items: center; text-align: center; max-width: 620px; margin: 24px auto; }
 .paywall h2 { font-size: 30px; font-weight: 800; }
@@ -206,8 +207,9 @@ footer { border-top: 1px solid var(--line); padding-block: 20px 36px; color: var
 <main class="wrap">
   <div class="card signin" id="signin" hidden>
     <b>Sign in to BuyBelow</b>
-    <span class="muted">Enter your email and we'll send a link. No password.</span>
-    <form id="signin-form" novalidate><input id="signin-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email"><button class="btn" type="submit">Email me a sign-in link</button></form>
+    <a class="btn gbtn" id="signin-google" href="/api/auth/google" hidden><svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>Continue with Google</a>
+    <span class="muted" id="signin-or" hidden>or get a sign-in link by email, no password:</span>
+    <form id="signin-form" novalidate hidden><input id="signin-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email"><button class="btn" type="submit">Email me a sign-in link</button></form>
     <p class="note" id="signin-note" role="status"></p>
   </div>
   <div class="card paywall" id="paywall" hidden>
@@ -782,12 +784,12 @@ $("alert-custom").addEventListener("input", renderVal);
 /* When this page is served at /app it talks to the BuyBelow server: accounts, plan limits, saved watchlists.
    Anywhere else (the private preview) it keeps working on its own. */
 const APP = location.pathname.startsWith("/app");
-const account = { signedIn: false, subscribed: false, email: "" };
+const account = { signedIn: false, subscribed: false, email: "", ways: { google: false, emailLink: false } };
 const locked = () => APP && !account.subscribed;
 async function loadAccount() {
   try {
     const j = await (await fetch("/api/me")).json();
-    Object.assign(account, { signedIn: !!j.signedIn, subscribed: !!j.subscribed, email: j.email || "" });
+    Object.assign(account, { signedIn: !!j.signedIn, subscribed: !!j.subscribed, email: j.email || "", ways: j.ways || account.ways });
   } catch { /* stays signed out */ }
   $("acct").hidden = false;
   $("acct-plan").hidden = !account.signedIn; $("acct-plan").textContent = account.subscribed ? "Subscribed" : "No subscription"; $("acct-plan").className = "pill " + (account.subscribed ? "go" : "wait");
@@ -799,7 +801,12 @@ function showPaywall() {
   $("paywall-signin").hidden = account.signedIn;
 }
 $("paywall-signin").addEventListener("click", () => showSignin());
-function showSignin(msg) { const box = $("signin"); box.hidden = false; $("signin-note").className = "note"; $("signin-note").textContent = msg || ""; box.scrollIntoView({ block: "center" }); $("signin-email").focus(); }
+function showSignin(msg) {
+  const box = $("signin"), w = account.ways; box.hidden = false;
+  $("signin-google").hidden = !w.google; $("signin-form").hidden = !w.emailLink; $("signin-or").hidden = !(w.google && w.emailLink);
+  $("signin-note").className = "note"; $("signin-note").textContent = msg || (!w.google && !w.emailLink ? "Sign-in opens at launch. Join the waitlist to hear the day it does." : "");
+  box.scrollIntoView({ block: "center" }); if (w.emailLink && !w.google) $("signin-email").focus();
+}
 $("acct-btn").addEventListener("click", async () => {
   if (!account.signedIn) { showSignin(); return; }
   await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
@@ -1095,7 +1102,11 @@ find.addEventListener("keydown", (e) => {
 (async function boot() {
   loadLocal();
   $("co-name").textContent = "Loading companies…";
-  if (APP) { await loadAccount(); if (new URLSearchParams(location.search).get("signin") === "expired") showSignin("That sign-in link has expired or was already used. Ask for a new one."); }
+  if (APP) { await loadAccount(); const why = new URLSearchParams(location.search).get("signin");
+    if (why === "expired") showSignin("That sign-in link has expired or was already used. Ask for a new one.");
+    if (why === "google-failed") showSignin("Google sign-in didn't complete. Try again.");
+    if (why === "google-off") showSignin("Google sign-in is not switched on yet.");
+    if (why) history.replaceState(null, "", "/app"); }
   try { const r = await fetch(APP ? "/data/index.json" : "data/index.json"); if (!r.ok) throw new Error(r.status); const j = await r.json(); INDEX = j.companies; INDEX.forEach((row) => { row[1] = cleanName(row[1]); }); $("foot").textContent = `BuyBelow covers ${INDEX.length.toLocaleString()} NYSE and Nasdaq listings (${INDEX.filter((r) => r[2] >= 0).length.toLocaleString()} with financials), built ${fmtDate(j.built)}. Financials: SEC EDGAR XBRL company facts (10-K and 10-Q filings). Share prices are typed values, not live quotes. Research tool, not investment advice. Company names are trademarks of their owners; BuyBelow is not affiliated with them.`; }
   catch { $("co-name").textContent = "Couldn't load the company list"; $("co-sub").textContent = "Reload the page to try again."; return; }
   try { const r = await fetch(APP ? "/data/prices.json" : "data/prices.json"); if (r.ok) PX = await r.json(); } catch { /* the page works without quotes */ }

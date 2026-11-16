@@ -10,5 +10,9 @@ DEV_AUTO_SUBSCRIBE=1
 # Password for the waitlist page at /admin on your computer.
 ADMIN_TOKEN=local-admin
 
+# Optional: "Continue with Google". Create an OAuth client in Google Cloud (see README) and paste its two values.
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
 # Optional: your Twelve Data key, for real share prices. Without it, prices are placeholders you can type over.
 TWELVEDATA_API_KEY=

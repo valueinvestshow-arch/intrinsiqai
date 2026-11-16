@@ -2,6 +2,7 @@
 import * as waitlist from "./api/waitlist.js";
 import * as exporter from "./api/export.js";
 import * as auth from "./api/auth.js";
+import * as google from "./api/google.js";
 import * as watch from "./api/watchlist.js";
 import * as company from "./api/company.js";
 import * as price from "./api/price.js";
@@ -20,6 +21,8 @@ export default {
       // Accounts
       if (pathname === "/api/auth/request") return method === "POST" ? auth.requestLink(ctx) : notAllowed();
       if (pathname === "/api/auth/verify") return method === "GET" ? auth.verify(ctx) : notAllowed();
+      if (pathname === "/api/auth/google") return method === "GET" ? google.start(ctx) : notAllowed();
+      if (pathname === "/api/auth/google/callback") return method === "GET" ? google.callback(ctx) : notAllowed();
       if (pathname === "/api/auth/logout") return method === "POST" ? auth.logout(ctx) : notAllowed();
       if (pathname === "/api/me") return method === "GET" ? auth.me(ctx) : notAllowed();
       // Watchlist

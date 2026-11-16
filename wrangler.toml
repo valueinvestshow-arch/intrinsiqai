@@ -22,3 +22,4 @@ crons = ["*/15 * * * *"]
 #   ADMIN_TOKEN          the waitlist admin page
 #   TWELVEDATA_API_KEY   share prices
 #   RESEND_API_KEY       sign-in and buy-price emails
+#   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET   "Continue with Google"

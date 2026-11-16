@@ -13,6 +13,7 @@ worker/index.js                routes /api/* and serves site/
 worker/api/waitlist.js         saves a sign-up (POST /api/waitlist)
 worker/api/export.js           feeds the admin page (GET /api/export, needs the admin token)
 worker/api/auth.js             sign-in by emailed link: /api/auth/request, /api/auth/verify, /api/auth/logout, /api/me
+worker/api/google.js           Continue with Google: /api/auth/google and its callback
 worker/api/watchlist.js        saved valuations, with the free and premium limits enforced
 worker/lib.js                  sessions, plans and shared helpers
 db/schema.sql                  run once to create the sign-up table
@@ -61,6 +62,8 @@ npm run dev
 ```
 
 Then open http://localhost:8787/app and sign in with any email: the page shows a "Click here to sign in" link instead of sending one, and local accounts start subscribed. The landing page is at http://localhost:8787 and the waitlist page at http://localhost:8787/admin (password `local-admin`).
+
+To try "Continue with Google" locally, create an OAuth client (Google Cloud Console -> APIs & Services -> Credentials -> Create credentials -> OAuth client ID -> Web application) with the redirect address `http://localhost:8787/api/auth/google/callback`, and paste its client ID and secret into `.dev.vars`. On the live site the redirect address is `https://buybelow.io/api/auth/google/callback` and the two values are Worker secrets.
 
 For real share prices, paste your Twelve Data key after `TWELVEDATA_API_KEY=` in the `.dev.vars` file and restart `npm run dev`. That file never leaves your computer.
 
