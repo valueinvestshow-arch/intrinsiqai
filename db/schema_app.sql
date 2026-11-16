@@ -37,3 +37,18 @@ CREATE TABLE IF NOT EXISTS watchlist (
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   PRIMARY KEY (user_id, ticker)
 );
+
+-- Latest share price per stock, cached so each one costs at most one lookup an hour.
+CREATE TABLE IF NOT EXISTS prices (
+  ticker     TEXT PRIMARY KEY,
+  price      REAL NOT NULL,
+  change_pct REAL,
+  as_of      TEXT,                 -- the trading day the price is for
+  fetched_at TEXT NOT NULL
+);
+
+-- Small counters, such as how many price lookups the scheduled job has spent today.
+CREATE TABLE IF NOT EXISTS meta (
+  key   TEXT PRIMARY KEY,
+  value INTEGER NOT NULL DEFAULT 0
+);

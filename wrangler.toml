@@ -15,4 +15,10 @@ binding = "DB"
 database_name = "buybelow-waitlist"
 database_id = "6b20f0ab-7892-47b4-8cfe-5d29b803f67d"
 
-# ADMIN_TOKEN is a secret set in the dashboard (Settings -> Variables and Secrets), never in this file.
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Secrets, set in the dashboard (Settings -> Variables and Secrets), never in this file:
+#   ADMIN_TOKEN          the waitlist admin page
+#   TWELVEDATA_API_KEY   share prices
+#   RESEND_API_KEY       sign-in and buy-price emails

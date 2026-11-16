@@ -837,6 +837,8 @@ async function connectStore() {
     store.items = {}; store.cloud = account.subscribed;
     if (account.subscribed) {
       try { const j = await (await fetch("/api/watchlist")).json(); (j.items || []).forEach((it) => { if (it.data && it.data.ticker) store.items[it.data.ticker] = it.data; }); } catch { /* shown as empty */ }
+      const saved = Object.keys(store.items);
+      if (saved.length) try { const j = await (await fetch("/api/prices?tickers=" + encodeURIComponent(saved.join(",")))).json(); (j.prices || []).forEach((q) => { if (!PX.p[q.ticker]) PX.p[q.ticker] = [q.price, q.change_pct, 0, "", ""]; if (q.as_of && !PX.asOf) PX.asOf = q.as_of; }); } catch { /* rows fall back to the saved price */ }
     }
     if (D) renderWatch();
     return;
@@ -1024,7 +1026,7 @@ function loadCompany(t) {
     $("q-price").textContent = "$" + qt[0].toFixed(2);
     const ch = $("q-chg"); ch.textContent = ok(qt[1]) ? (qt[1] >= 0 ? "▲ +" : "▼ −") + Math.abs(qt[1]).toFixed(2) + "%" : ""; ch.className = "num " + (qt[1] >= 0 ? "up" : "down");
     const cap = qt[2] > 0 ? "Mkt cap $" + (qt[2] >= 1e12 ? (qt[2] / 1e12).toFixed(2) + "T" : qt[2] >= 1e9 ? (qt[2] / 1e9).toFixed(1) + "B" : (qt[2] / 1e6).toFixed(0) + "M") : "";
-    $("q-sub").textContent = [`Last price ${pxDate()}`, cap, qt[4] || qt[3]].filter(Boolean).join(" · ");
+    $("q-sub").textContent = [`Last price ${pxDate()}`, cap, qt[4] || qt[3], PX.source ? "Source: " + PX.source : ""].filter(Boolean).join(" · ");
   }
   state.ticker = t; remember();
   buildList();
@@ -1048,6 +1050,16 @@ async function ensure(t) {
   try { Object.assign(DATA, await (shards[id] = shards[id] || fetch(`data/s/${id}.json`).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }))); } catch { delete shards[id]; return false; }
   return !!DATA[t];
 }
+// Subscribers get the latest price from the server (Twelve Data, cached for an hour).
+async function loadPrice(t) {
+  try {
+    const r = await fetch("/api/price/" + encodeURIComponent(t));
+    if (!r.ok) return;
+    const q = await r.json();
+    PX.p[t] = [q.price, q.change_pct, 0, "", ""]; if (q.as_of) PX.asOf = q.as_of; PX.source = q.source;
+    if (prices[t] !== undefined && priceNote(t, prices[t]) !== "your test price") delete prices[t];   // adopt the new price unless a test price was typed
+  } catch { /* keeps the placeholder */ }
+}
 async function openCompany(t) {
   const row = INDEX.find((r) => r[0] === t);
   if (row && row[2] < 0) {
@@ -1056,7 +1068,7 @@ async function openCompany(t) {
     box.scrollIntoView({ block: "center" }); return;
   }
   $("co-sub").textContent = `Loading ${t}…`;
-  const got = locked(t) ? "locked" : await ensure(t);
+  const [got] = await Promise.all([locked(t) ? "locked" : ensure(t), APP && !locked(t) ? loadPrice(t) : null]);
   if (got === "locked") {
     const box = $("none-banner"); box.hidden = false;
     showPaywall(); return;

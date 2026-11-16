@@ -4,6 +4,8 @@ import * as exporter from "./api/export.js";
 import * as auth from "./api/auth.js";
 import * as watch from "./api/watchlist.js";
 import * as company from "./api/company.js";
+import * as price from "./api/price.js";
+import { runPriceJob } from "./prices.js";
 import { json } from "./lib.js";
 
 const notAllowed = () => json({ error: "Method not allowed." }, 405);
@@ -30,11 +32,18 @@ export default {
       }
       // Company data, gated by plan
       if (pathname.startsWith("/api/company/")) return method === "GET" ? company.get(ctx, decodeURIComponent(pathname.slice("/api/company/".length))) : notAllowed();
+      // Share prices
+      if (pathname === "/api/prices") return method === "GET" ? price.many(ctx) : notAllowed();
+      if (pathname.startsWith("/api/price/")) return method === "GET" ? price.one(ctx, decodeURIComponent(pathname.slice("/api/price/".length))) : notAllowed();
       if (pathname.startsWith("/data/s/")) return json({ error: "Not found." }, 404);   // only readable through /api/company
       if (pathname.startsWith("/api/")) return json({ error: "Not found." }, 404);
     } catch {
       return json({ error: "Something went wrong. Try again." }, 500);
     }
     return env.ASSETS.fetch(request);
+  },
+  // Every 15 minutes: refresh the stalest watchlist prices and send any buy-price emails that are due.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runPriceJob(env).catch(() => {}));
   },
 };
