@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /data/
+
+Sitemap: https://buybelow.io/sitemap.xml

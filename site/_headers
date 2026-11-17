@@ -1,7 +1,7 @@
 # Security headers for every page. The pages keep their script and styles inline, so the policy allows
 # inline code from this site only and blocks every outside script, style, font, frame and connection.
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
@@ -16,6 +16,9 @@
 /admin*
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
+
+/favicon.ico
+  Cache-Control: public, max-age=86400
 
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable

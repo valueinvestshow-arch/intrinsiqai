@@ -6,7 +6,9 @@
 import re
 s = open("src/landing.src.html").read()
 open("landing.html", "w").write(s)
-body = re.sub(r"<!--FONTS-->.*?<!--/FONTS-->", '<link rel="preload" href="/fonts/dm-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>\n<link rel="stylesheet" href="/fonts/fonts.css">', s, flags=re.S)
+SEO = open("src/seo_head.html").read()
+body = re.sub(r"<!--SEO-->.*?<!--/SEO-->", lambda m: SEO, s, flags=re.S)
+body = re.sub(r"<!--FONTS-->.*?<!--/FONTS-->", '<link rel="preload" href="/fonts/dm-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>\n<link rel="stylesheet" href="/fonts/fonts.css">', body, flags=re.S)
 cut = body.index('<header class="nav">')
 head = body[:cut].replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
 doc = '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n' + head + "</head>\n<body>\n" + body[cut:] + "</body>\n</html>\n"
